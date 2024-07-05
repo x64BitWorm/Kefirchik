@@ -1,0 +1,10 @@
+version: "3"
+
+services:
+
+  backend:
+    build:
+      context: ../
+      dockerfile: ./Deploy/Dockerfile
+    volumes:
+      - './../Database:/var/lib/kefirchik'
