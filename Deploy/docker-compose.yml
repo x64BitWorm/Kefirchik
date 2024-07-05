@@ -8,3 +8,6 @@ services:
       dockerfile: ./Deploy/Dockerfile
     volumes:
       - './../Database:/var/lib/kefirchik'
+    environment:
+      - MODE=release
+      - TG_TOKEN=secret
