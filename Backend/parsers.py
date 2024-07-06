@@ -8,6 +8,6 @@ class ParsedQuery:
             else:
                 t = " ".join(line.split())
                 if t.split()[0][0] == '@':
-                    self.debters[t.split()[0]] = (t.split()[1] if len(t.split()) > 1 else '')
+                    self.debters[t.split()[0][1:]] = (t.split()[1] if len(t.split()) > 1 else '')
                 else:
                     self.desc += line + '\n'

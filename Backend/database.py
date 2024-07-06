@@ -2,7 +2,52 @@ import sqlite3
 
 sqlite_connection = 0
 
+def getGroup(id):
+    global sqlite_connection
+    try:
+        cursor = sqlite_connection.cursor()
+        cursor.execute(f'select * from groups where id = {id};')
+        record = cursor.fetchall()
+        if (len(record) == 0):
+            cursor.execute(f'insert into groups (id, lastReport, startReset) values ({id}, \'\', 0);')
+            sqlite_connection.commit()
+            cursor.execute(f'select * from groups where id = {id};')
+            record = cursor.fetchall()
+        record = record[0]
+        result = { 'id': record[0], 'lastReport': record[1], 'startReset': record[2] }
+        return result
+    finally:
+        cursor.close()
 
+def insertCost(messageId, groupId, isCompleted, telegramFromId, costAmount, debtors, desc):
+    global sqlite_connection
+    try:
+        cursor = sqlite_connection.cursor()
+        cursor.execute(f'insert into costs (messageId, groupId, isCompleted, telegramFromId, costAmount, debtors, desc) values ({messageId}, {groupId}, {isCompleted}, \'{telegramFromId}\', {costAmount}, \'{debtors}\', \'{desc}\');')
+        sqlite_connection.commit()
+    finally:
+        cursor.close()
+
+def updateCost(messageId, isCompleted, debtors):
+    global sqlite_connection
+    try:
+        cursor = sqlite_connection.cursor()
+        cursor.execute(f'update costs set isCompleted = {isCompleted}, debtors = \'{debtors}\' where messageId = {messageId};')
+        sqlite_connection.commit()
+    finally:
+        cursor.close()
+
+def getCost(messageId):
+    global sqlite_connection
+    try:
+        cursor = sqlite_connection.cursor()
+        cursor.execute(f'select * from costs where messageId = {messageId};')
+        record = cursor.fetchall()
+        record = record[0]
+        result = { 'messageId': record[0], 'groupId': record[1], 'isCompleted': record[2], 'telegramFromId': record[3], 'costAmount': record[4], 'debtors': record[5], 'desc': record[6] }
+        return result
+    finally:
+        cursor.close()
 
 def initDatabase():
     global sqlite_connection
@@ -13,5 +58,5 @@ def initDatabase():
     record = cursor.fetchall()
     print("SQLite version - ", record)
     cursor.execute("CREATE TABLE IF NOT EXISTS groups (id NUMERIC (8) PRIMARY KEY NOT NULL UNIQUE, lastReport BLOB, startReset INTEGER);")
-    cursor.execute("CREATE TABLE IF NOT EXISTS costs (messageId NUMERIC (8) PRIMARY KEY UNIQUE NOT NULL, groupId INTEGER REFERENCES groups (id) NOT NULL, isCompleted INTEGER (1) NOT NULL, telegramFromId NUMERIC (8) NOT NULL, costAmount REAL (8) NOT NULL, Debtors TEXT NOT NULL);")
+    cursor.execute("CREATE TABLE IF NOT EXISTS costs (messageId NUMERIC (8) PRIMARY KEY UNIQUE NOT NULL, groupId INTEGER REFERENCES groups (id) NOT NULL, isCompleted INTEGER (1) NOT NULL, telegramFromId TEXT NOT NULL, costAmount REAL (8) NOT NULL, Debtors TEXT NOT NULL, Desc TEXT NOT NULL);")
     cursor.close()
