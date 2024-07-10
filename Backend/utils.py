@@ -1,5 +1,6 @@
 import json
 import calculations
+import random
 
 def checkCostState(debtors):
     debtors = json.loads(debtors)
@@ -14,3 +15,13 @@ def setDebtersFinalValues(debters, amount):
     for i, (k, v) in enumerate(debters.items()):
         debters[k] = ans[i]
     return json.dumps(debters)
+
+def getUncompletedSpending(spendings):
+    print(spendings)
+    unCompleted = []
+    for item in spendings:
+        if item['isCompleted'] == 0:
+            unCompleted.append(item)
+    if len(unCompleted) == 0:
+        return None
+    return random.choice(unCompleted)

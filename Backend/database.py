@@ -19,6 +19,24 @@ def getGroup(id):
     finally:
         cursor.close()
 
+def getSpendings(groupId):
+    global sqlite_connection
+    try:
+        cursor = sqlite_connection.cursor()
+        cursor.execute(f'select * from costs where groupId = {groupId};')
+        records = cursor.fetchall()
+        return list(map(lambda record: {
+            'messageId': record[0],
+            'groupId': record[1],
+            'isCompleted': record[2],
+            'telegramFromId': record[3],
+            'costAmount': record[4],
+            'debtors': record[5],
+            'desc': record[6]
+            }, records))
+    finally:
+        cursor.close()
+
 def insertCost(messageId, groupId, isCompleted, telegramFromId, costAmount, debtors, desc):
     global sqlite_connection
     try:
@@ -28,24 +46,33 @@ def insertCost(messageId, groupId, isCompleted, telegramFromId, costAmount, debt
     finally:
         cursor.close()
 
-def updateCost(messageId, isCompleted, debtors):
+def updateCost(groupId, messageId, isCompleted, debtors):
     global sqlite_connection
     try:
         cursor = sqlite_connection.cursor()
-        cursor.execute(f'update costs set isCompleted = {isCompleted}, debtors = \'{debtors}\' where messageId = {messageId};')
+        cursor.execute(f'update costs set isCompleted = {isCompleted}, debtors = \'{debtors}\' where groupId = {groupId} messageId = {messageId};')
         sqlite_connection.commit()
     finally:
         cursor.close()
 
-def getCost(messageId):
+def getCost(groupId, messageId):
     global sqlite_connection
     try:
         cursor = sqlite_connection.cursor()
-        cursor.execute(f'select * from costs where messageId = {messageId};')
+        cursor.execute(f'select * from costs where groupId = {groupId} and messageId = {messageId};')
         record = cursor.fetchall()
         record = record[0]
         result = { 'messageId': record[0], 'groupId': record[1], 'isCompleted': record[2], 'telegramFromId': record[3], 'costAmount': record[4], 'debtors': record[5], 'desc': record[6] }
         return result
+    finally:
+        cursor.close()
+
+def removeCosts(groupId):
+    global sqlite_connection
+    try:
+        cursor = sqlite_connection.cursor()
+        cursor.execute(f'delete from costs where groupId = {groupId};')
+        return True
     finally:
         cursor.close()
 
