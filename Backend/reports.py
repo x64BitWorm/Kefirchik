@@ -1,17 +1,17 @@
 from queue import PriorityQueue
 
 # trati - [{'amount', 'papik', 'debtors': {name: amount}}]
-# returns - {'papiks': {name: amount}, 'debtors': {name: amount}, 'balances': {name: amount}}
+# returns - dict<name>{amount}, {papiks, debtors, balance}
 def generateReport(trati):
     data = {'papiks':{}, 'debtors':{}, 'balances':{}}
     for trata in trati:
         amount = trata['amount']
-        if trata['papik'] not in data['papiks']:
-            data['papiks'][trata['papik']] = 0
-        data['papiks'][trata['papik']] += trata['amount']
-        if trata['papik'] not in data['balances']:
-            data['balances'][trata['papik']] = 0
-        data['balances'][trata['papik']] += trata['amount']
+        if trata['creditor'] not in data['papiks']:
+            data['papiks'][trata['creditor']] = 0
+        data['papiks'][trata['creditor']] += trata['amount']
+        if trata['creditor'] not in data['balances']:
+            data['balances'][trata['creditor']] = 0
+        data['balances'][trata['creditor']] += trata['amount']
         for debtor, debt in trata['debtors'].items():
             if debtor not in data['debtors']:
                 data['debtors'][debtor] = 0
@@ -25,7 +25,7 @@ def generateReport(trati):
     return data
 
 # balances - {name: amount}
-# returns - [{'from', 'to', 'amount'}]
+# returns - {from, to, amount}[]
 def calculateTransactions(balances):
     balanceCheck = sum(balances.values())
     if abs(balanceCheck) >= 0.01:
@@ -43,8 +43,8 @@ def calculateTransactions(balances):
         papik = {}
         papik['amount'], papik['name'] = papiks.get()
         amount = min(-papik['amount'], -doljnik['amount'])
-        transactions.append({'from': papik['name'],
-                             'to': doljnik['name'],
+        transactions.append({'from': doljnik['name'],
+                             'to': papik['name'],
                              'amount': amount
                             })
         if -papik['amount'] < -doljnik['amount']:
@@ -52,3 +52,9 @@ def calculateTransactions(balances):
         elif -papik['amount'] > -doljnik['amount']:
             papiks.put((papik['amount'] + amount, papik['name']))
     return transactions
+
+# spendings, report, transactions
+# returns stringIO document
+def generateCsv(spendings, report, transactions):
+    # TODO
+    pass

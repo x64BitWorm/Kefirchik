@@ -17,7 +17,6 @@ def setDebtersFinalValues(debters, amount):
     return json.dumps(debters)
 
 def getUncompletedSpending(spendings):
-    print(spendings)
     unCompleted = []
     for item in spendings:
         if item['isCompleted'] == 0:
@@ -25,3 +24,10 @@ def getUncompletedSpending(spendings):
     if len(unCompleted) == 0:
         return None
     return random.choice(unCompleted)
+
+def convertSpendingsToReportDto(spendings):
+    return list(map(lambda record: {
+        'amount': record['costAmount'],
+        'creditor': record['telegramFromId'],
+        'debtors': json.loads(record['debtors'])
+    }, spendings))

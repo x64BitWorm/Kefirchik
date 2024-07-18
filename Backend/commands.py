@@ -1,11 +1,13 @@
-from telegram import ForceReply, Update, constants
-from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
+from telegram import ForceReply, Update, constants, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters, CallbackContext
 import database
 import json
 import parsers
 import calculations
 import utils
 import reports
+import io
+from datetime import date
 
 async def add_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Добавление новой траты"""
@@ -61,18 +63,30 @@ async def report_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if uncompletedSpending != None:
         await update.message.reply_text('Сначала завершите трату', reply_to_message_id=uncompletedSpending['messageId'])
         return
-    # TODO converter
-    report = reports.generateReport(spendings)
-    transactions = reports.calculateTransactions(report)
-    answer = ''
-    for transaction in transactions:
-        answer += f'{transaction['from']} ➡️ {transaction['to']} {transaction['amount']}🎪\n'
-    await update.message.reply_text(answer)
+    try:
+        spendings = utils.convertSpendingsToReportDto(spendings)
+        report = reports.generateReport(spendings)
+        transactions = reports.calculateTransactions(report['balances'])
+        answer = ''
+        for transaction in transactions:
+            answer += f'{transaction["from"]} ➡️ {transaction["to"]} {transaction["amount"]}🎪\n'
+        await update.message.reply_text(answer, reply_markup=getCsvReportMarkup())
+    except Exception as e:
+        await update.message.reply_text('⚠️ ' + str(e))
+        raise e
     
-
 async def reset_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Сброс истории трат"""
     group = database.getGroup(update.message.chat_id)
     database.removeCosts(group['id'])
     await update.message.reply_text("Все траты очищены!")
 
+async def report_csv_callback(update: Update, ctx: CallbackContext) -> None:
+    query = update.callback_query
+    doc = io.StringIO('coming soon!')
+    doc.name = f'Отчет_{date.today()}.csv'
+    await query.message.reply_document(document=doc,caption='Ваш отчет готов 📈')
+    query.answer()
+
+def getCsvReportMarkup():
+    return InlineKeyboardMarkup([[InlineKeyboardButton('Отчет.csv', callback_data="report-csv")]])

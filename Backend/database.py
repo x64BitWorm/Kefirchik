@@ -50,7 +50,7 @@ def updateCost(groupId, messageId, isCompleted, debtors):
     global sqlite_connection
     try:
         cursor = sqlite_connection.cursor()
-        cursor.execute(f'update costs set isCompleted = {isCompleted}, debtors = \'{debtors}\' where groupId = {groupId} messageId = {messageId};')
+        cursor.execute(f'update costs set isCompleted = {isCompleted}, debtors = \'{debtors}\' where groupId = {groupId} and messageId = {messageId};')
         sqlite_connection.commit()
     finally:
         cursor.close()
@@ -72,6 +72,7 @@ def removeCosts(groupId):
     try:
         cursor = sqlite_connection.cursor()
         cursor.execute(f'delete from costs where groupId = {groupId};')
+        sqlite_connection.commit()
         return True
     finally:
         cursor.close()
