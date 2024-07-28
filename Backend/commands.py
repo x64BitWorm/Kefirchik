@@ -68,9 +68,12 @@ async def report_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         report = reports.generateReport(spendings)
         transactions = reports.calculateTransactions(report['balances'])
         answer = ''
-        for transaction in transactions:
-            answer += f'{transaction["from"]} ➡️ {transaction["to"]} {transaction["amount"]}🎪\n'
-        await update.message.reply_text(answer, reply_markup=getCsvReportMarkup())
+        if len(transactions) > 0:
+            for transaction in transactions:
+                answer += f'{transaction["from"]} ➡️ {transaction["to"]} {transaction["amount"]}🎪\n'
+            await update.message.reply_text(answer, reply_markup=getCsvReportMarkup())
+        else:
+            await update.message.reply_text('⚠️ Нет записанных трат')
     except Exception as e:
         await update.message.reply_text('⚠️ ' + str(e))
         raise e
