@@ -77,6 +77,16 @@ def removeCosts(groupId):
     finally:
         cursor.close()
 
+def removeCost(groupId, messageId):
+    global sqlite_connection
+    try:
+        cursor = sqlite_connection.cursor()
+        cursor.execute(f'delete from costs where groupId = {groupId} and messageId = {messageId};')
+        sqlite_connection.commit()
+        return True
+    finally:
+        cursor.close()
+
 def initDatabase():
     global sqlite_connection
     sqlite_connection = sqlite3.connect('/var/lib/kefirchik/kefirchik.db')

@@ -21,7 +21,7 @@ async def add_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         message += ' ждем' + ' @'.join([''] + notFilled)
     else:
         debs = utils.setDebtersFinalValues(data.debters, data.amount)
-    rep = await update.message.reply_text(message)
+    rep = await update.message.reply_text(message, reply_markup=getCancelMarkup())
     database.insertCost(rep.id, update.message.chat_id, completed, update.message.from_user.username, data.amount, debs, data.desc)
     if completed:
         await post_cost_completed(rep.id, update)
@@ -49,11 +49,6 @@ async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def post_cost_completed(messageId, update: Update):
     pass
-    #cost = database.getCost(messageId)
-    #text = f'По итогу {cost["costAmount"]}\n'
-    #for k, v in json.loads(cost["debtors"]).items():
-    #    text += f'{k}: {v}'
-    #await update.message.reply_text(text)
 
 async def report_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Создания отчетов трат"""
@@ -91,5 +86,18 @@ async def report_csv_callback(update: Update, ctx: CallbackContext) -> None:
     await query.message.reply_document(document=doc,caption='Ваш отчет готов 📈')
     query.answer()
 
+async def cancel_callback(update: Update, ctx: CallbackContext) -> None:
+    query = update.callback_query
+    chat = query.message.chat.id
+    message = query.message.message_id
+    cost = database.getCost(chat, message)
+    if query.from_user.username == cost['telegramFromId']:
+        database.removeCost(chat, message)
+        await query.message.delete()
+    await query.answer()
+
 def getCsvReportMarkup():
     return InlineKeyboardMarkup([[InlineKeyboardButton('Отчет.csv', callback_data="report-csv")]])
+
+def getCancelMarkup():
+    return InlineKeyboardMarkup([[InlineKeyboardButton('Отмена', callback_data='cancel-send')]])
