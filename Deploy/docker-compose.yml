@@ -8,6 +8,8 @@ services:
       dockerfile: ./Deploy/Dockerfile
     volumes:
       - './../Database:/var/lib/kefirchik'
+    ports:
+     - "8443:8443"
     environment:
       - MODE=release
-      - TG_TOKEN=secret
+      - TG_TOKEN=${TG_TOKEN}

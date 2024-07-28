@@ -79,7 +79,7 @@ def removeCosts(groupId):
 
 def initDatabase():
     global sqlite_connection
-    sqlite_connection = sqlite3.connect('..\\Database\\kefirchik.db')
+    sqlite_connection = sqlite3.connect('/var/lib/kefirchik/kefirchik.db')
     cursor = sqlite_connection.cursor()
     sqlite_select_query = "select sqlite_version();"
     cursor.execute(sqlite_select_query)
