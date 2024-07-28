@@ -25,6 +25,7 @@ def main() -> None:
     application.add_handler(CommandHandler("reset", commands.reset_command))
     application.add_handler(CallbackQueryHandler(commands.report_csv_callback, pattern='report-csv'))
     application.add_handler(CallbackQueryHandler(commands.cancel_callback, pattern='cancel-send'))
+    application.add_handler(CallbackQueryHandler(commands.reset_callback, pattern='reset-costs'))
     application.add_handler(MessageHandler(filters.REPLY, commands.reply))
     if MODE == 'release':
         application.bot.set_webhook(url=f"https://kefirchik-bot.tw1.ru:8443", allowed_updates=Update.ALL_TYPES)

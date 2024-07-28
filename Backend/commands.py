@@ -79,8 +79,9 @@ async def report_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 async def reset_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Сброс истории трат"""
     group = database.getGroup(update.message.chat_id)
-    database.removeCosts(group['id'])
-    await update.message.reply_text("Все траты очищены!")
+    costs = database.getSpendings(group['id'])
+    users = ",".join(set(map(lambda x: x['telegramFromId'], costs)))
+    await update.message.reply_text(users, reply_markup=getResetMarkup())
 
 async def report_csv_callback(update: Update, ctx: CallbackContext) -> None:
     query = update.callback_query
@@ -98,6 +99,22 @@ async def cancel_callback(update: Update, ctx: CallbackContext) -> None:
         database.removeCost(chat, message)
         await query.message.delete()
     await query.answer()
+
+async def reset_callback(update: Update, ctx: CallbackContext) -> None:
+    query = update.callback_query
+    fromUser = query.from_user.username
+    chat = query.message.chat.id
+    message = query.message.text
+    users = message.split(",")
+    await query.answer()
+    users.remove(fromUser)
+    if len(users) == 0:
+        database.removeCosts(chat)
+        await query.message.delete()
+        await query.message.reply_text("Траты сброшены💨")
+        return
+    users = ",".join(users)
+    await query.message.edit_text(users, reply_markup=getResetMarkup())
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     message = """
@@ -125,3 +142,6 @@ def getCsvReportMarkup():
 
 def getCancelMarkup():
     return InlineKeyboardMarkup([[InlineKeyboardButton('Отмена', callback_data='cancel-send')]])
+
+def getResetMarkup():
+    return InlineKeyboardMarkup([[InlineKeyboardButton('Подтверждаю сброс', callback_data='reset-costs')]])
