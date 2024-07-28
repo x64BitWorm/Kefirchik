@@ -37,7 +37,7 @@ def calculateTransactions(balances):
     for k, v in dict(filter(lambda x:x[1]<0, balances.items())).items():
         doljniks.put((v, k))
     transactions = []
-    while not papiks.empty() or not doljniks.empty():
+    while not papiks.empty() and not doljniks.empty():
         doljnik = {}
         doljnik['amount'], doljnik['name'] = doljniks.get()
         papik = {}
