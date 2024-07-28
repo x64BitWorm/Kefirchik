@@ -12,7 +12,7 @@ from datetime import date
 async def add_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Добавление новой траты"""
     group = database.getGroup(update.message.chat_id)
-    data = parsers.ParsedQuery(update.message.text)
+    data = parsers.ParsedQuery(update.message)
     debs = json.dumps(data.debters)
     notFilled = utils.checkCostState(debs)
     completed = len(notFilled) == 0
