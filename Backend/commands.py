@@ -14,17 +14,20 @@ async def add_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     group = database.getGroup(update.message.chat_id)
     data = parsers.ParsedQuery(update.message)
     debs = json.dumps(data.debters)
-    notFilled = utils.checkCostState(debs)
-    completed = len(notFilled) == 0
-    message = 'Запомнил🍶'
-    if not completed:
-        message += ' ждем' + ' @'.join([''] + notFilled)
-    else:
-        debs = utils.setDebtersFinalValues(data.debters, data.amount)
-    rep = await update.message.reply_text(message, reply_markup=getCancelMarkup())
-    database.insertCost(rep.id, update.message.chat_id, completed, update.message.from_user.username, data.amount, debs, data.desc)
-    if completed:
-        await post_cost_completed(rep.id, update)
+    try:
+        notFilled = utils.checkCostState(debs)
+        completed = len(notFilled) == 0
+        message = 'Запомнил🍶'
+        if not completed:
+            message += ' ждем' + ' @'.join([''] + notFilled)
+        else:
+            debs = utils.setDebtersFinalValues(data.debters, data.amount)
+        rep = await update.message.reply_text(message, reply_markup=getCancelMarkup())
+        database.insertCost(rep.id, update.message.chat_id, completed, update.message.from_user.username, data.amount, debs, data.desc)
+        if completed:
+            await post_cost_completed(rep.id, update)
+    except:
+        await update.message.set_reaction(constants.ReactionEmoji.CRYING_FACE)
 
 async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Добавление незаполненного должника"""
@@ -95,6 +98,27 @@ async def cancel_callback(update: Update, ctx: CallbackContext) -> None:
         database.removeCost(chat, message)
         await query.message.delete()
     await query.answer()
+
+async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    message = """
+Привет! Это бот для расчета совместных трат
+
+* тот кто платил вызывает команду add (удерживает ее в тг пальцем) и пишет сумму которую потратил через пробел.
+потом тэгает на каждой новой строчке чела и через пробел пишет сколько он потратил.
+* а еще мы добавили немного задротства, поэтому в выражении кто скока потратил можно писать не просто число, а целое выражение (например 100+50/2), и даже переменную x,
+для добавления общей траты (например если пили общий чай, то можно написать что типа Артем потратил 300+x, где 300 его личные траты, а x это чтото общее).
+все строчки в add которые не начинаются с тэга это комменты (например "за пончики").
+* ну и после того как добавили все траты можно дернуть команду report и она выплюнет кто скока кому переводит бабок.
+* а команда reset (ну очень опасная) удаляет все траты и их придеца заполнять заново
+
+пример:
+/add@kefirchik42_bot 1500
+@x64BitWorm 500+x
+@Artem_Barsov 300+x
+@Grisha_Barsov 100
+@Random_Name_0 100
+"""
+    await update.message.reply_text(message)
 
 def getCsvReportMarkup():
     return InlineKeyboardMarkup([[InlineKeyboardButton('Отчет.csv', callback_data="report-csv")]])

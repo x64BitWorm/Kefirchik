@@ -19,6 +19,7 @@ def main() -> None:
     TOKEN = os.environ.get('TG_TOKEN')
     MODE = os.environ.get('MODE')
     application = Application.builder().token(TOKEN).build()
+    application.add_handler(CommandHandler("start", commands.start_command))
     application.add_handler(CommandHandler("add", commands.add_command))
     application.add_handler(CommandHandler("report", commands.report_command))
     application.add_handler(CommandHandler("reset", commands.reset_command))
