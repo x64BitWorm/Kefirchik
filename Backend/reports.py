@@ -1,7 +1,10 @@
 from queue import PriorityQueue
+from datetime import date
+import csv
+import io
 
 # trati - [{'amount', 'papik', 'debtors': {name: amount}}]
-# returns - dict<name>{amount}, {papiks, debtors, balance}
+# returns - {'papiks': {name: amount}, 'debtors': {name: amount}, 'balances': {name: amount}}
 def generateReport(trati):
     data = {'papiks':{}, 'debtors':{}, 'balances':{}}
     for trata in trati:
@@ -25,7 +28,7 @@ def generateReport(trati):
     return data
 
 # balances - {name: amount}
-# returns - {from, to, amount}[]
+# returns - [{'from', 'to', 'amount'}]
 def calculateTransactions(balances):
     balanceCheck = sum(balances.values())
     if abs(balanceCheck) >= 0.01:
@@ -55,6 +58,37 @@ def calculateTransactions(balances):
 
 # spendings, report, transactions
 # returns stringIO document
-def generateCsv(spendings, report, transactions):
-    # TODO
-    pass
+def generateCsv(spendings):
+    report = generateReport(spendings)
+    transactions = calculateTransactions(report['balances'])
+
+    doc = io.StringIO()
+    doc.name = f'Отчет_{date.today()}.csv'
+
+    writer = csv.writer(doc)
+    names = list(report['balances'].keys())
+    nameId = {name: id for id, name in enumerate(names)}
+    
+    l = [''] * len(names)
+    for papik, amount in report['papiks'].items():
+        l[nameId[papik]] = amount
+    writer.writerow(['', 'Всего', 'заплатил'] + l)
+
+    l = [''] * len(names)
+    for debtor, amount in report['debtors'].items():
+        l[nameId[debtor]] = amount
+    writer.writerow(['', '', 'должен заплатить'] + l)
+    
+    l = [''] * len(names)
+    for balance, amount in report['balances'].items():
+        l[nameId[balance]] = amount
+    writer.writerow(['', '', 'баланс'] + l)
+
+    writer.writerow(['Наименование', 'Кто', 'Сколько'] + list(report['balances'].keys()))
+    for trata in spendings:
+        debts = [''] * len(names)
+        for debtor, amount in trata['debtors'].items():
+            debts[nameId[debtor]] = amount
+        writer.writerow([trata['comment'], trata['creditor'], trata['amount']] + debts)
+    doc.seek(0)
+    return doc

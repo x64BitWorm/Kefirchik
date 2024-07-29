@@ -29,5 +29,6 @@ def convertSpendingsToReportDto(spendings):
     return list(map(lambda record: {
         'amount': record['costAmount'],
         'creditor': record['telegramFromId'],
-        'debtors': json.loads(record['debtors'])
+        'debtors': json.loads(record['debtors']),
+        'comment': record['desc'],
     }, spendings))
