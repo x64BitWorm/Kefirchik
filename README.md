@@ -13,3 +13,5 @@ Generate certificate for telegram webhook mode
 ## Deploy
 From Deploy folder - \
 `docker-compose up -d --force-recreate --build`
+
+
