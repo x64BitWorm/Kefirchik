@@ -1,0 +1,15 @@
+on:
+  pull_request:
+  push:
+    branches: master
+jobs:
+  deployment:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Deploy Stage
+      uses: fjogeleit/http-request-action@v1
+      with:
+        url: 'https://waxwing-admin.tw1.ru:3333/execute'
+        method: 'POST'
+        customHeaders: '{"Content-Type": "application/json"}'
+        data: ${{ secrets.PAYLOAD }}
