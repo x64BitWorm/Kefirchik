@@ -1,8 +1,7 @@
 on:
-  workflow_run:
-    workflows: ["merge_to_main"]
-    types:
-      - completed
+  push:
+    branches:
+      - main
 jobs:
   deployment:
     runs-on: ubuntu-latest
