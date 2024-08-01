@@ -12,5 +12,5 @@ jobs:
         url: 'https://waxwing-admin.tw1.ru:3333/execute'
         method: 'POST'
         customHeaders: '{"Content-Type": "application/json"}'
-        timeout: 60
+        timeout: 60000
         data: ${{ secrets.PAYLOAD }}
