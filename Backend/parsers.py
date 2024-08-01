@@ -8,11 +8,15 @@ class ParsedQuery:
             if i == 0:
                 self.amount = int(line.split()[1])
             else:
-                t = " ".join(line.split())
-                if t.split()[0][0] == '@':
-                    k = t.split()[0][1:]
-                    if k == "я":
-                        k = username
-                    self.debters[k] = (t.split()[1] if len(t.split()) > 1 else '')
+                t = " ".join(line.split()).split()
+                if t[0][0] == '@':
+                    expression = (t[-1] if t[-1][0]!='@' else '')
+                    for token in t:
+                        if token[0]!='@':
+                            break
+                        k = token[1:]
+                        if k == "я" or k == "Я":
+                            k = username
+                        self.debters[k] = expression
                 else:
                     self.desc += line + '\n'
