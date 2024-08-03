@@ -6,7 +6,7 @@ class ParsedQuery:
         self.desc = ''
         for i, line in enumerate(text.splitlines()):
             if i == 0:
-                self.amount = int(line.split()[1])
+                self.amount = float(line.split()[1])
             else:
                 t = " ".join(line.split()).split()
                 if t[0][0] == '@':
