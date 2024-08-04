@@ -45,7 +45,7 @@ def calculate_token(expr):
     return (0, 1)
   else:
     try:
-      return (int(expr), 0)
+      return (float(expr), 0)
     except ValueError:
       raise Exception("Value is neither x nor number.")
 
