@@ -61,10 +61,7 @@ def calculateTransactions(balances):
 def generateCsv(spendings):
     report = generateReport(spendings)
     transactions = calculateTransactions(report['balances'])
-
     doc = io.StringIO()
-    doc.name = f'Отчет_{date.today()}.csv'
-
     writer = csv.writer(doc)
     names = list(report['balances'].keys())
     nameId = {name: id for id, name in enumerate(names)}
@@ -90,5 +87,7 @@ def generateCsv(spendings):
         for debtor, amount in trata['debtors'].items():
             debts[nameId[debtor]] = amount
         writer.writerow([trata['comment'], trata['creditor'], trata['amount']] + debts)
+    doc = io.StringIO('\ufeff' + doc.getvalue()) # UTF-8 BOM
+    doc.name = f'Отчет_{date.today()}.csv'
     doc.seek(0)
     return doc
