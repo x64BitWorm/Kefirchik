@@ -77,12 +77,12 @@ def generateCsv(spendings):
         l[nameId[balance]] = amount
     writer.writerow(['', '', 'баланс'] + l)
 
-    writer.writerow(['Наименование', 'Кто', 'Сколько'] + list(report['balances'].keys()))
+    writer.writerow(['Наименование', 'Кто', 'Сколько'] + list(report['balances'].keys()) + ['Дата'])
     for trata in spendings:
         debts = [''] * len(names)
         for debtor, amount in trata['debtors'].items():
             debts[nameId[debtor]] = amount
-        writer.writerow([trata['comment'], trata['creditor'], trata['amount']] + debts)
+        writer.writerow([trata['comment'], trata['creditor'], trata['amount']] + debts + [trata['date']])
     doc = io.StringIO('\ufeff' + doc.getvalue()) # UTF-8 BOM
     doc.name = f'Отчет_{date.today()}.csv'
     doc.seek(0)

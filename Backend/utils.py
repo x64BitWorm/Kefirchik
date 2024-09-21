@@ -32,4 +32,5 @@ def convertSpendingsToReportDto(spendings):
         'isCompleted': record['isCompleted'],
         'debtors': json.loads(record['debtors']),
         'comment': record['desc'],
+        'date': record['date']
     }, spendings))
