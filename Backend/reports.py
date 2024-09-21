@@ -23,16 +23,13 @@ def generateReport(trati):
                 data['balances'][debtor] = 0
             data['balances'][debtor] -= debt
             amount -= debt
-        if abs(amount) >= 0.01:
-            raise ValueError('Штаны не сошлись! сумма долгов в трате не равна деньгам папика')
+        if not trata['isCompleted']:
+            raise ValueError('Трата не завершена')
     return data
 
 # balances - {name: amount}
 # returns - [{'from', 'to', 'amount'}]
 def calculateTransactions(balances):
-    balanceCheck = sum(balances.values())
-    if abs(balanceCheck) >= 0.01:
-        raise ValueError('Штаны чашек не сходятся! (сумма должна быть 0), а щас: ' + str(balanceCheck))
     papiks = PriorityQueue()
     for k, v in dict(filter(lambda x:x[1]>0, balances.items())).items():
         papiks.put((-v, k))
@@ -60,7 +57,6 @@ def calculateTransactions(balances):
 # returns stringIO document
 def generateCsv(spendings):
     report = generateReport(spendings)
-    transactions = calculateTransactions(report['balances'])
     doc = io.StringIO()
     writer = csv.writer(doc)
     names = list(report['balances'].keys())
