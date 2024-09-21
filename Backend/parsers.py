@@ -1,3 +1,5 @@
+import calculations
+
 class ParsedQuery:
     def __init__(self, s):
         text = s.text
@@ -6,7 +8,10 @@ class ParsedQuery:
         self.desc = ''
         for i, line in enumerate(text.splitlines()):
             if i == 0:
-                self.amount = float(line.split()[1])
+                total = calculations.parse_expression(line.split()[1])
+                if total[1] != 0:
+                    raise Exception('Использование x в сумме запрещено')
+                self.amount = total[0]
             else:
                 t = " ".join(line.split()).split()
                 if t[0][0] == '@':
