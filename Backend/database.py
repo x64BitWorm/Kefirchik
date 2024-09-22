@@ -1,4 +1,5 @@
 import sqlite3
+from datetime import datetime
 
 sqlite_connection = 0
 
@@ -32,7 +33,8 @@ def getSpendings(groupId):
             'telegramFromId': record[3],
             'costAmount': record[4],
             'debtors': record[5],
-            'desc': record[6]
+            'desc': record[6],
+            'date': datetime.fromtimestamp(record[7])
             }, records))
     finally:
         cursor.close()
@@ -41,7 +43,8 @@ def insertCost(messageId, groupId, isCompleted, telegramFromId, costAmount, debt
     global sqlite_connection
     try:
         cursor = sqlite_connection.cursor()
-        cursor.execute(f'insert into costs (messageId, groupId, isCompleted, telegramFromId, costAmount, debtors, desc) values ({messageId}, {groupId}, {isCompleted}, \'{telegramFromId}\', {costAmount}, \'{debtors}\', \'{desc}\');')
+        now = int(datetime.now().timestamp())
+        cursor.execute(f'insert into costs (messageId, groupId, isCompleted, telegramFromId, costAmount, debtors, desc, date) values ({messageId}, {groupId}, {isCompleted}, \'{telegramFromId}\', {costAmount}, \'{debtors}\', \'{desc}\', {now});')
         sqlite_connection.commit()
     finally:
         cursor.close()
@@ -62,7 +65,7 @@ def getCost(groupId, messageId):
         cursor.execute(f'select * from costs where groupId = {groupId} and messageId = {messageId};')
         record = cursor.fetchall()
         record = record[0]
-        result = { 'messageId': record[0], 'groupId': record[1], 'isCompleted': record[2], 'telegramFromId': record[3], 'costAmount': record[4], 'debtors': record[5], 'desc': record[6] }
+        result = { 'messageId': record[0], 'groupId': record[1], 'isCompleted': record[2], 'telegramFromId': record[3], 'costAmount': record[4], 'debtors': record[5], 'desc': record[6], 'date': datetime.fromtimestamp(record[7]) }
         return result
     finally:
         cursor.close()

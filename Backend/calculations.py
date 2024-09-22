@@ -2,6 +2,8 @@ import math
 import re
 from queue import LifoQueue
 
+MONEY_ACCURACY = 5
+
 opening_brackets = "([{<"
 closing_brackets = ")]}>"
 operation_priorities = {"+": 1, "*": 2, "/": 3}
@@ -110,10 +112,10 @@ def calculate_spendings(expressions, total_sum):
   b_total = expressions_sum[0]
 
   if a_total == 0:
-    if total_sum == b_total:
-      return [b for b, a in expressions_values]
-    else:
-      raise Exception("Shtani ne soshlis :(")
+    diff = total_sum - b_total
+    if abs(diff) >= MONEY_ACCURACY * len(expressions):
+      raise Exception("Shtani silno ne soshlis :(")
+    return [b + diff / len(expressions) for b, a in expressions_values]
   
   x = (total_sum - b_total) / a_total
   

@@ -3,7 +3,6 @@ from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandl
 import database
 import json
 import parsers
-import calculations
 import utils
 import reports
 import io
@@ -11,10 +10,10 @@ from datetime import date
 
 async def add_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Добавление новой траты"""
-    group = database.getGroup(update.message.chat_id)
-    data = parsers.ParsedQuery(update.message)
-    debs = json.dumps(data.debters)
     try:
+        database.getGroup(update.message.chat_id)
+        data = parsers.ParsedQuery(update.message)
+        debs = json.dumps(data.debters)
         notFilled = utils.checkCostState(debs)
         completed = len(notFilled) == 0
         message = 'Запомнил🍶'
