@@ -69,16 +69,14 @@ def calculate_operation(left_value, op, right_value):
     raise Exception("Unsupported operation encountered.")
 
 def calculate(expr: str):
+  expr = trim_expr(expr)
   split_index = get_split_index(expr)
 
   if split_index == -1:
-    return calculate_token(trim_expr(expr))
+    return calculate_token(expr)
   else:
-    left_expr = trim_expr(expr[:split_index])
-    right_expr = trim_expr(expr[split_index + 1:])
-
-    left_value = calculate(left_expr)
-    right_value = calculate(right_expr)
+    left_value = calculate(expr[:split_index])
+    right_value = calculate(expr[split_index + 1:])
     op = expr[split_index]
 
     return calculate_operation(left_value, op, right_value)
@@ -101,6 +99,7 @@ def validate_expression(expr: str):
 
 def parse_expression(expr: str):
   expr = expr.replace('х','x')
+  expr = expr.replace(',','.')
   validate_expression(expr)
   return calculate(expr)
 
