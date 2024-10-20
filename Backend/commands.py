@@ -34,7 +34,14 @@ async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     cost = database.getCost(group['id'], update.message.reply_to_message.id)
     username = update.message.from_user.username
     debs = json.loads(cost['debtors'])
-    debs[username] = update.message.text
+    if not update.message.text.isdigit():
+        await update.message.set_reaction(constants.ReactionEmoji.CLOWN_FACE)
+        return
+    debtorNumber = int(update.message.text)
+    if debtorNumber < 0 or debtorNumber > cost['costAmount']:
+        await update.message.set_reaction(constants.ReactionEmoji.CLOWN_FACE)
+        return
+    debs[username] = debtorNumber
     debs = json.dumps(debs)
     notFilled = utils.checkCostState(debs)
     completed = len(notFilled) == 0
@@ -58,7 +65,8 @@ async def report_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     spendings = database.getSpendings(group['id'])
     uncompletedSpending = utils.getUncompletedSpending(spendings)
     if uncompletedSpending != None:
-        await update.message.reply_text('Сначала завершите трату', reply_to_message_id=uncompletedSpending['messageId'])
+        notFilled = utils.checkCostState(uncompletedSpending['debtors'])
+        await update.message.reply_text('Сначала завершите трату'+' @'.join(['']+notFilled), reply_to_message_id=uncompletedSpending['messageId'])
         return
     try:
         spendings = utils.convertSpendingsToReportDto(spendings)
@@ -80,7 +88,10 @@ async def reset_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     group = database.getGroup(update.message.chat_id)
     costs = database.getSpendings(group['id'])
     users = ",".join(set(map(lambda x: x['telegramFromId'], costs)))
-    await update.message.reply_text(users, reply_markup=getResetMarkup())
+    if not users:
+        database.removeCosts(update.message.chat_id)
+    else:
+        await update.message.reply_text(users, reply_markup=getResetMarkup())
 
 async def report_csv_callback(update: Update, ctx: CallbackContext) -> None:
     query = update.callback_query
@@ -109,10 +120,9 @@ async def reset_callback(update: Update, ctx: CallbackContext) -> None:
     users = message.split(",")
     await query.answer()
     users.remove(fromUser)
-    if len(users) == 0:
+    if not users:
         database.removeCosts(chat)
-        await query.message.delete()
-        await query.message.reply_text("Траты сброшены💨")
+        await query.message.edit_text("Траты сброшены💨")
         return
     users = ",".join(users)
     await query.message.edit_text(users, reply_markup=getResetMarkup())
