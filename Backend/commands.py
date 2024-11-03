@@ -99,7 +99,7 @@ async def report_csv_callback(update: Update, ctx: CallbackContext) -> None:
     spendings = database.getSpendings(group['id'])
     spendings = utils.convertSpendingsToReportDto(spendings)
     doc = reports.generateCsv(spendings)
-    await query.message.reply_document(document=doc, caption='Ваш отчет готов 📈')
+    await query.message.reply_document(document=doc, caption='Ваш отчет готов 📈 @' + query.from_user.username)
     await query.answer()
 
 async def cancel_callback(update: Update, ctx: CallbackContext) -> None:
