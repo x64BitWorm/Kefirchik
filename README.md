@@ -5,6 +5,7 @@ by 42
 * Python
 * Telegram API
 * SQLite
+* YaNA
 
 # Preparing
 Generate certificate for telegram webhook mode
