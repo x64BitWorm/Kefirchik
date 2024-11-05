@@ -43,6 +43,8 @@ def trim_expr(expr: str):
       expr = expr1
 
 def calculate_token(expr):
+  if expr == '':
+    return (0, 0)
   if expr == 'x':
     return (0, 1)
   else:
