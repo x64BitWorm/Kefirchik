@@ -6,7 +6,7 @@ MONEY_ACCURACY = 5
 
 opening_brackets = "([{<"
 closing_brackets = ")]}>"
-operation_priorities = {"+": 1, "*": 2, "/": 3}
+operation_priorities = {"-" : 1, "+": 1, "*": 2, "/": 3}
 
 def get_operation_priorities(expr: str):
   bracket_depth = 0
@@ -54,6 +54,8 @@ def calculate_token(expr):
 def calculate_operation(left_value, op, right_value):
   if op == '+':
     return (left_value[0] + right_value[0], left_value[1] + right_value[1])
+  elif op == '-':
+    return (left_value[0] - right_value[0], left_value[1] - right_value[1])
   elif op == '*':
     if (left_value[1] != 0) and (right_value[1] != 0):
       raise Exception("Cannot multiply two variables x.")

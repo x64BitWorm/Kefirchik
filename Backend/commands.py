@@ -25,7 +25,8 @@ async def add_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         database.insertCost(rep.id, update.message.chat_id, completed, update.message.from_user.username, data.amount, debs, data.desc)
         if completed:
             await post_cost_completed(rep.id, update)
-    except:
+    except Exception as e:
+        print("Error: ", e)
         await update.message.set_reaction(constants.ReactionEmoji.CRYING_FACE)
 
 async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
