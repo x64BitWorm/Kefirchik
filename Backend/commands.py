@@ -35,14 +35,14 @@ async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     cost = database.getCost(group['id'], update.message.reply_to_message.id)
     username = update.message.from_user.username
     debs = json.loads(cost['debtors'])
-    if not update.message.text.isdigit():
+    try:
+        answer = utils.calculations.parse_expression(update.message.text)
+        if answer[0] < 0 or answer[0] > cost['costAmount']:
+            raise
+    except:
         await update.message.set_reaction(constants.ReactionEmoji.CLOWN_FACE)
         return
-    debtorNumber = int(update.message.text)
-    if debtorNumber < 0 or debtorNumber > cost['costAmount']:
-        await update.message.set_reaction(constants.ReactionEmoji.CLOWN_FACE)
-        return
-    debs[username] = debtorNumber
+    debs[username] = update.message.text
     debs = json.dumps(debs)
     notFilled = utils.checkCostState(debs)
     completed = len(notFilled) == 0
@@ -100,7 +100,7 @@ async def report_csv_callback(update: Update, ctx: CallbackContext) -> None:
     spendings = database.getSpendings(group['id'])
     spendings = utils.convertSpendingsToReportDto(spendings)
     doc = reports.generateCsv(spendings)
-    await query.message.reply_document(document=doc, caption='Ваш отчет готов 📈')
+    await query.message.reply_document(document=doc, caption='Ваш отчет готов 📈 @' + query.from_user.username)
     await query.answer()
 
 async def cancel_callback(update: Update, ctx: CallbackContext) -> None:
