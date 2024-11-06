@@ -12,12 +12,17 @@ logging.basicConfig(
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
+DB_RELEASE_PATH = '/var/lib/kefirchik/kefirchik.db'
+DB_DEBUG_PATH = '../Database/kefirchik.db'
 
 def main() -> None:
     """Start the bot."""
-    database.initDatabase()
     TOKEN = os.environ.get('TG_TOKEN')
     MODE = os.environ.get('MODE')
+
+    db_path = DB_RELEASE_PATH if MODE == 'release' else DB_DEBUG_PATH
+    database.initDatabase(db_path)
+
     application = Application.builder().token(TOKEN).build()
     application.add_handler(CommandHandler("start", commands.start_command))
     application.add_handler(CommandHandler("add", commands.add_command))
