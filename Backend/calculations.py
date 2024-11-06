@@ -43,8 +43,6 @@ def trim_expr(expr: str):
       expr = expr1
 
 def calculate_token(expr):
-  if expr == '':
-    return (0, 0)
   if expr == 'x':
     return (0, 1)
   else:
@@ -79,9 +77,15 @@ def calculate(expr: str):
   if split_index == -1:
     return calculate_token(expr)
   else:
-    left_value = calculate(expr[:split_index])
-    right_value = calculate(expr[split_index + 1:])
+    left_expr = expr[:split_index]
+    right_expr = expr[split_index + 1:]
     op = expr[split_index]
+
+    if left_expr == '' and op == '-':
+      left_expr = '0'
+
+    left_value = calculate(left_expr)
+    right_value = calculate(right_expr)
 
     return calculate_operation(left_value, op, right_value)
 
