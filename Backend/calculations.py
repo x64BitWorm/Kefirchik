@@ -126,7 +126,4 @@ def calculate_spendings(expressions, total_sum):
   
   x = (total_sum - b_total) / a_total
   
-  if x < 0:
-    raise Exception("Variable x cannot be less than 0.")
-
   return [a * x + b for b, a in expressions_values]
