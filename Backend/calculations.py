@@ -6,7 +6,7 @@ MONEY_ACCURACY = 5
 
 opening_brackets = "([{<"
 closing_brackets = ")]}>"
-operation_priorities = {"+": 1, "*": 2, "/": 3}
+operation_priorities = {"-" : 1, "+": 1, "*": 2, "/": 3}
 
 def get_operation_priorities(expr: str):
   bracket_depth = 0
@@ -54,6 +54,8 @@ def calculate_token(expr):
 def calculate_operation(left_value, op, right_value):
   if op == '+':
     return (left_value[0] + right_value[0], left_value[1] + right_value[1])
+  elif op == '-':
+    return (left_value[0] - right_value[0], left_value[1] - right_value[1])
   elif op == '*':
     if (left_value[1] != 0) and (right_value[1] != 0):
       raise Exception("Cannot multiply two variables x.")
@@ -75,9 +77,15 @@ def calculate(expr: str):
   if split_index == -1:
     return calculate_token(expr)
   else:
-    left_value = calculate(expr[:split_index])
-    right_value = calculate(expr[split_index + 1:])
+    left_expr = expr[:split_index]
+    right_expr = expr[split_index + 1:]
     op = expr[split_index]
+
+    if left_expr == '' and op == '-':
+      left_expr = '0'
+
+    left_value = calculate(left_expr)
+    right_value = calculate(right_expr)
 
     return calculate_operation(left_value, op, right_value)
 
@@ -118,7 +126,4 @@ def calculate_spendings(expressions, total_sum):
   
   x = (total_sum - b_total) / a_total
   
-  if x < 0:
-    raise Exception("Variable x cannot be less than 0.")
-
   return [a * x + b for b, a in expressions_values]
