@@ -17,7 +17,7 @@ DB_DEBUG_PATH = '../Database/kefirchik.db'
 
 def main() -> None:
     """Start the bot."""
-    TOKEN = os.environ.get('TG_TOKEN')
+    TOKEN = "7215302023:AAHbIyoivewbaKeug_zIU5OHNODqUsT_24w"
     MODE = os.environ.get('MODE')
 
     db_path = DB_RELEASE_PATH if MODE == 'release' else DB_DEBUG_PATH
@@ -31,6 +31,9 @@ def main() -> None:
     application.add_handler(CallbackQueryHandler(commands.report_csv_callback, pattern='report-csv'))
     application.add_handler(CallbackQueryHandler(commands.cancel_callback, pattern='cancel-send'))
     application.add_handler(CallbackQueryHandler(commands.reset_callback, pattern='reset-costs'))
+    application.add_handler(CallbackQueryHandler(commands.add_cur_callback, pattern='add-cur'))
+    application.add_handler(CallbackQueryHandler(commands.rewrite_cur_callback, pattern='rewrite-cur'))
+    application.add_handler(CallbackQueryHandler(commands.reset_cur_callback, pattern='reset-cur'))
     application.add_handler(MessageHandler(filters.REPLY, commands.reply))
     if MODE == 'release':
         application.bot.set_webhook(url=f"https://kefirchik-bot.tw1.ru:8443", allowed_updates=Update.ALL_TYPES)

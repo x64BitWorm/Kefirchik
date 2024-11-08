@@ -8,29 +8,46 @@ import reports
 import io
 from datetime import date
 
+addMessage = None
+respMessage = None
+
 async def add_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Добавление новой траты"""
     try:
-        database.getGroup(update.message.chat_id)
-        data = parsers.ParsedQuery(update.message)
-        debs = json.dumps(data.debters)
-        notFilled = utils.checkCostState(debs)
-        completed = len(notFilled) == 0
-        message = 'Запомнил🍶'
-        if not completed:
-            message += ' ждем' + ' @'.join([''] + notFilled)
-        else:
-            debs = utils.setDebtersFinalValues(data.debters, data.amount)
-        rep = await update.message.reply_text(message, reply_markup=getCancelMarkup())
-        database.insertCost(rep.id, update.message.chat_id, completed, update.message.from_user.username, data.amount, debs, data.desc)
-        if completed:
-            await post_cost_completed(rep.id, update)
+        global addMessage
+        addMessage = update.message
+        message = 'Запомнил🍶' + ' ждем' + ' @Random_Name0, @John_Doe'
+        await update.message.reply_text(message, reply_markup=getCancelMarkup())
     except Exception as e:
         print("Error: ", e)
         await update.message.set_reaction(constants.ReactionEmoji.CRYING_FACE)
 
+exprs = ["1000", "(1000) + (2/3*450)", "(1000) + (2/3*450) + (x)","(1000) + (2/3*450) + (x)", "100+900+1/3*2*450+400", "42"]
+cnt = 0
+must_delete = None
 async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Добавление незаполненного должника"""
+    global cnt
+    global exprs
+    global respMessage
+    global must_delete
+    respMessage = update.message
+    print(cnt)
+    if update.message.text[0] == '4':
+        message = """Трата обновлена. Ваша трата: 42""" 
+        await update.message.reply_text(message, reply_markup=getSuccessMarkup(True))
+    elif cnt == 0 :
+        message = """Трата обновлена. Ваша трата: """ + exprs[cnt]
+        await update.message.reply_text(message, reply_markup=getSuccessMarkup(True))
+    elif update.message.text[0] == '+':
+        message = """Трата обновлена. Ваша трата:""" + exprs[cnt]
+        await update.message.reply_text(message, reply_markup=getSuccessMarkup(True))
+    else:
+        message = """Вы действительно хотите перезаписать трату новой записью?
+⚠️ При перезаписи все предыдущие ваши записи по данной трате будут удалены ⚠️"""
+        must_delete = await update.message.reply_text(message, reply_markup=getTryRewriteMarkup())
+    cnt += 1
+    return
     group = database.getGroup(update.message.chat_id)
     cost = database.getCost(group['id'], update.message.reply_to_message.id)
     username = update.message.from_user.username
@@ -113,6 +130,45 @@ async def cancel_callback(update: Update, ctx: CallbackContext) -> None:
         await query.message.delete()
     await query.answer()
 
+
+async def reset_cur_callback(update: Update, ctx: CallbackContext) -> None:
+    global respMessage
+    query = update.callback_query
+    message = 'Снова ждем @Random_Name_0'
+    await ctx.bot.deleteMessage (message_id = must_delete.message_id,chat_id = respMessage.chat_id)
+    await respMessage.reply_text('Трата успешно сброшена', reply_markup=getSuccessMarkup(False))
+    await addMessage.reply_text(message)
+    await query.answer()
+
+async def rewrite_cur_callback(update: Update, ctx: CallbackContext) -> None:
+    global cnt
+    global exprs
+    global must_delete
+    query = update.callback_query
+    message = """Трата обновлена. Ваша трата: """ + exprs[cnt]
+    await ctx.bot.deleteMessage (message_id = must_delete.message_id,chat_id = respMessage.chat_id)
+    must_delete = await respMessage.reply_text(message, reply_markup=getSuccessMarkup(True))
+    await query.answer()
+
+async def add_cur_callback(update: Update, ctx: CallbackContext) -> None:
+    global cnt
+    global exprs
+    query = update.callback_query
+    message = """Трата обновлена. Ваша трата: """ + exprs[cnt]
+    await ctx.bot.deleteMessage (message_id = must_delete.message_id,chat_id = respMessage.chat_id)
+    await respMessage.reply_text(message, reply_markup=getSuccessMarkup(True))
+    await query.answer()
+
+async def cancel_callback(update: Update, ctx: CallbackContext) -> None:
+    query = update.callback_query
+    chat = query.message.chat.id
+    message = query.message.message_id
+    cost = database.getCost(chat, message)
+    if query.from_user.username == cost['telegramFromId']:
+        database.removeCost(chat, message)
+        await query.message.delete()
+    await query.answer()
+
 async def reset_callback(update: Update, ctx: CallbackContext) -> None:
     query = update.callback_query
     fromUser = query.from_user.username
@@ -152,8 +208,17 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 def getCsvReportMarkup():
     return InlineKeyboardMarkup([[InlineKeyboardButton('Отчет.csv', callback_data="report-csv")]])
 
+def getTryRewriteMarkup():
+    return InlineKeyboardMarkup([[InlineKeyboardButton('Перезаписать трату', callback_data='rewrite-cur')], [InlineKeyboardButton('Дополнить трату записью', callback_data='add-cur')], [InlineKeyboardButton('Отмена', callback_data='cancel-send')]])
+
 def getCancelMarkup():
     return InlineKeyboardMarkup([[InlineKeyboardButton('Отмена', callback_data='cancel-send')]])
+
+def getSuccessMarkup(withCancel: bool):
+    if withCancel:
+        return InlineKeyboardMarkup([[InlineKeyboardButton('Сбросить всю трату', callback_data='reset-cur')], [InlineKeyboardButton('Отмена', callback_data='cancel-send')]])
+    else:
+        return InlineKeyboardMarkup([[InlineKeyboardButton('Отмена', callback_data='cancel-send')]])
 
 def getResetMarkup():
     return InlineKeyboardMarkup([[InlineKeyboardButton('Подтверждаю сброс', callback_data='reset-costs')]])
