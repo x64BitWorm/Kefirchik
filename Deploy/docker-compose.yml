@@ -11,5 +11,5 @@ services:
     ports:
      - "8443:8443"
     environment:
-      - MODE=${MODE}
+      - MODE=${MODE:-release}
       - TG_TOKEN=${TG_TOKEN}
