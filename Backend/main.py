@@ -13,7 +13,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 DB_RELEASE_PATH = '/var/lib/kefirchik/kefirchik.db'
-DB_DEBUG_PATH = '../Database/kefirchik.db'
+DB_DEBUG_PATH = './kefirchik.db'
 
 def main() -> None:
     """Start the bot."""
