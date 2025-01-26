@@ -48,7 +48,7 @@ def main() -> None:
         application.run_webhook(
             listen='0.0.0.0',
             port=8443,
-            secret_token=TOKEN,
+            secret_token='ASecretTokenIHaveChangedByNow',
             key='/var/lib/kefirchik/private.key',
             cert='/var/lib/kefirchik/cert.pem',
             webhook_url='https://kefirchik-bot.tw1.ru:8443'
