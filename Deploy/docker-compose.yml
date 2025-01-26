@@ -3,6 +3,7 @@ version: "3"
 services:
 
   backend:
+    container_name: kefirchik-server
     build:
       context: ../
       dockerfile: ./Deploy/Dockerfile

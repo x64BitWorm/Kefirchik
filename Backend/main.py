@@ -23,7 +23,7 @@ def setupEnv():
     if MODE == 'release':
         use_web_hooks = True
         db_path = DB_RELEASE_PATH
-    elif MODE == 'grisha':
+    elif MODE == 'debug':
         use_web_hooks = False
         db_path = os.environ.get('DB_PATH')
     return (use_web_hooks, db_path)
