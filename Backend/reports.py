@@ -64,25 +64,25 @@ def generateCsv(spendings):
     
     l = [''] * len(names)
     for papik, amount in report['papiks'].items():
-        l[nameId[papik]] = amount
+        l[nameId[papik]] = round(amount, 2)
     writer.writerow(['', 'Всего', 'заплатил'] + l)
 
     l = [''] * len(names)
     for debtor, amount in report['debtors'].items():
-        l[nameId[debtor]] = amount
+        l[nameId[debtor]] = round(amount, 2)
     writer.writerow(['', '', 'должен заплатить'] + l)
     
     l = [''] * len(names)
     for balance, amount in report['balances'].items():
-        l[nameId[balance]] = amount
+        l[nameId[balance]] = round(amount, 2)
     writer.writerow(['', '', 'баланс'] + l)
 
     writer.writerow(['Наименование', 'Кто', 'Сколько'] + list(report['balances'].keys()) + ['Дата'])
     for trata in spendings:
         debts = [''] * len(names)
         for debtor, amount in trata['debtors'].items():
-            debts[nameId[debtor]] = amount
-        writer.writerow([trata['comment'], trata['creditor'], trata['amount']] + debts + [trata['date']])
+            debts[nameId[debtor]] = round(amount, 2)
+        writer.writerow([trata['comment'], trata['creditor'], round(trata['amount'], 2)] + debts + [trata['date']])
     doc = io.StringIO('\ufeff' + doc.getvalue()) # UTF-8 BOM
     doc.name = f'Отчет_{date.today()}.csv'
     doc.seek(0)

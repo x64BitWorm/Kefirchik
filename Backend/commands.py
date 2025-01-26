@@ -83,7 +83,8 @@ async def report_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         answer = ''
         if len(transactions) > 0:
             for transaction in transactions:
-                answer += f'{transaction["from"]} ➡️ {transaction["to"]} {round(transaction["amount"], 2)}🎪\n'
+                if transaction["amount"] >= 0.01:
+                    answer += f'{transaction["from"]} ➡️ {transaction["to"]} {round(transaction["amount"], 2)}🎪\n'
             await update.message.reply_text(answer, reply_markup=getCsvReportMarkup())
         else:
             await update.message.reply_text('⚠️ Нет записанных трат')
