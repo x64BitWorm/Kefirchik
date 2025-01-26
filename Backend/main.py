@@ -25,7 +25,7 @@ def setupEnv():
         db_path = DB_RELEASE_PATH
     elif MODE == 'debug':
         use_web_hooks = False
-        db_path = os.environ.get('DB_PATH')
+        db_path = DB_RELEASE_PATH
     return (use_web_hooks, db_path)
 
 def main() -> None:
