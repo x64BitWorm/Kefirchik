@@ -15,7 +15,12 @@ class ParsedQuery:
             else:
                 t = " ".join(line.split()).split()
                 if t[0][0] == '@':
-                    expression = (''.join(t[1:]) if t[-1][0]!='@' else '')
+                    nicknameBorder = 0
+                    for i in range(len(t)):
+                        if t[i][0]!='@':
+                            nicknameBorder = i
+                            break
+                    expression = (''.join(t[nicknameBorder:]) if t[-1][0]!='@' else '')
                     for token in t:
                         if token[0]!='@':
                             break
