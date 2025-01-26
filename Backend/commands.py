@@ -34,14 +34,22 @@ async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     cost = database.getCost(group['id'], update.message.reply_to_message.id)
     username = update.message.from_user.username
     debs = json.loads(cost['debtors'])
+    expression = str(update.message.text)
     try:
-        answer = utils.calculations.parse_expression(update.message.text)
+        if len(expression) > 100:
+            await update.message.reply_text('🤓☝️ Внатуре задрот')
+            raise
+        if expression.startswith('...'):
+            if len(debs[username]) == 0:
+                raise
+            expression = debs[username] + expression[3:]
+        answer = utils.calculations.parse_expression(expression)
         if answer[0] < 0 or answer[0] > cost['costAmount']:
             raise
     except:
         await update.message.set_reaction(constants.ReactionEmoji.CLOWN_FACE)
         return
-    debs[username] = update.message.text
+    debs[username] = expression
     debs = json.dumps(debs)
     notFilled = utils.checkCostState(debs)
     completed = len(notFilled) == 0
