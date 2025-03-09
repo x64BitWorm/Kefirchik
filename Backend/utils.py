@@ -2,19 +2,13 @@ import json
 import calculations
 import random
 
-def checkCostState(debtors):
-    debtors = json.loads(debtors)
-    names = []
-    for k, v in debtors.items():
-        if not v:
-            names.append(k)
-    return names
-
-def setDebtersFinalValues(debters, amount):
-    ans = calculations.calculate_spendings(debters.values(), amount)
-    for i, (k, v) in enumerate(debters.items()):
-        debters[k] = ans[i]
-    return json.dumps(debters)
+class BotException(Exception):
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.text = args[0]
+    
+    def __str__(self):
+        return self.text
 
 def getUncompletedSpending(spendings):
     unCompleted = []

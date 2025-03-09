@@ -2,9 +2,9 @@ import calculations
 
 class ParsedQuery:
     def __init__(self, s):
-        text = s.text
-        username = s.from_user.username
-        self.debters = {}
+        text = s.getText()
+        username = s.getUsername()
+        self.debtors = {}
         self.desc = ''
         for i, line in enumerate(text.splitlines()):
             if i == 0:
@@ -27,6 +27,6 @@ class ParsedQuery:
                         k = token[1:]
                         if k == "я" or k == "Я":
                             k = username
-                        self.debters[k] = expression
+                        self.debtors[k] = expression
                 else:
                     self.desc += line + '\n'
