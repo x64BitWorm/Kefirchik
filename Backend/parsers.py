@@ -1,32 +1,47 @@
 import calculations
+import re
 
 class ParsedQuery:
-    def __init__(self, s):
-        text = s.getText()
-        username = s.getUsername()
-        self.debtors = {}
-        self.desc = ''
-        for i, line in enumerate(text.splitlines()):
-            if i == 0:
-                total = calculations.parse_expression(line.split()[1])
-                if total[1] != 0:
-                    raise Exception('Использование x в сумме запрещено')
-                self.amount = total[0]
-            else:
-                t = " ".join(line.split()).split()
-                if t[0][0] == '@':
-                    nicknameBorder = 0
-                    for i in range(len(t)):
-                        if t[i][0]!='@':
-                            nicknameBorder = i
-                            break
-                    expression = (''.join(t[nicknameBorder:]) if t[-1][0]!='@' else '')
-                    for token in t:
-                        if token[0]!='@':
-                            break
-                        k = token[1:]
-                        if k == "я" or k == "Я":
-                            k = username
-                        self.debtors[k] = expression
+    def __init__(self, text, from_username):
+        self.debters = {}
+        self.comment = ""
+        self.command = ""
+        first_line_pattern = r'^/(?P<command>\w+)(?:@\w+)?\s+(?P<amount_expr>\S+)\s*$'
+        debter_pattern = r'^(?P<users>(?: *@\w+)+) *(?P<expr>\S*) *$'
+        
+        lines = text.splitlines()
+        if not lines:
+            raise Exception("Empty message")
+        
+        # First line parsing (command and amount)
+        first_line_match = re.match(first_line_pattern, lines[0].strip(), re.IGNORECASE)
+        if not first_line_match:
+            raise Exception("Invalid command format in first line")
+        self.command = first_line_match.group("command").lower()
+        amount_expr = first_line_match.group("amount_expr")
+        
+        if any(x in amount_expr for x in ('x', 'X', 'х', 'Х')):
+            raise Exception('Использование x в сумме запрещено')
+        else:
+            total = calculations.parse_expression(amount_expr)
+            self.amount = total[0]
+        
+        # Following lines parsing (debters, debts, comments)
+        for line in lines[1:]:
+            if not line:
+                continue
+            if line.startswith('@'):
+                match = re.match(debter_pattern, line)
+                if match:
+                    users_part = match.group("users")
+                    expr = match.group("expr")
+                    for user in re.findall(r'@(\w+)', users_part):
+                        if user in {"я", "Я"}:
+                            user = from_username
+                        self.debters[user] = expr
                 else:
-                    self.desc += line + '\n'
+                    raise Exception('Неверный формат описания траты')
+            else:
+                self.comment += line + '\n'
+        self.comment = self.comment.strip()
+        print(self.command, self.amount, self.debters, self.comment)
