@@ -1,5 +1,4 @@
 import json
-import calculations
 import random
 
 class BotException(Exception):
@@ -9,6 +8,10 @@ class BotException(Exception):
     
     def __str__(self):
         return self.text
+
+class BotWrongInputException(Exception):
+    def __init__(self, *args):
+        super().__init__(*args)
 
 def getUncompletedSpending(spendings):
     unCompleted = []

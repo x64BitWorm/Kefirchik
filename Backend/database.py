@@ -2,17 +2,20 @@ import sqlite3
 from datetime import datetime
 import json
 
+from models.group import Group
+from models.spending import Spending
+
 class IDatabase:
-    def getGroup(self, id):
+    def getGroup(self, id) -> Group:
         """TODO"""
         pass
-    def getSpendings(self, groupId):
+    def getSpendings(self, groupId) -> list[Spending]:
         pass
     def insertCost(self, messageId, groupId, isCompleted, telegramFromId, costAmount, debtors, desc):
         pass
     def updateCost(self, groupId, messageId, isCompleted, debtors):
         pass
-    def getCost(self, groupId, messageId):
+    def getCost(self, groupId, messageId) -> Spending:
         pass
     def removeCosts(self, groupId):
         pass
@@ -31,7 +34,7 @@ class Database(IDatabase):
         cursor.execute("CREATE TABLE IF NOT EXISTS costs (messageId NUMERIC (8) PRIMARY KEY UNIQUE NOT NULL, groupId INTEGER REFERENCES groups (id) NOT NULL, isCompleted INTEGER (1) NOT NULL, telegramFromId TEXT NOT NULL, costAmount REAL (8) NOT NULL, Debtors TEXT NOT NULL, Desc TEXT NOT NULL, date INTEGER(4) NOT NULL);")
         cursor.close()
     
-    def getGroup(self, id):
+    def getGroup(self, id) -> Group:
         try:
             cursor = self.sqlite_connection.cursor()
             cursor.execute(f'select * from groups where id = {id};')
@@ -43,16 +46,16 @@ class Database(IDatabase):
                 record = cursor.fetchall()
             record = record[0]
             result = { 'id': record[0], 'lastReport': record[1], 'startReset': record[2] }
-            return result
+            return Group(result)
         finally:
             cursor.close()
 
-    def getSpendings(self, groupId):
+    def getSpendings(self, groupId) -> list[Spending]:
         try:
             cursor = self.sqlite_connection.cursor()
             cursor.execute(f'select * from costs where groupId = {groupId};')
             records = cursor.fetchall()
-            return list(map(lambda record: {
+            return list(map(lambda record: Spending({
                 'messageId': record[0],
                 'groupId': record[1],
                 'isCompleted': record[2],
@@ -61,7 +64,7 @@ class Database(IDatabase):
                 'debtors': record[5],
                 'desc': record[6],
                 'date': datetime.fromtimestamp(record[7])
-                }, records))
+                }), records))
         finally:
             cursor.close()
 
@@ -82,14 +85,14 @@ class Database(IDatabase):
         finally:
             cursor.close()
 
-    def getCost(self, groupId, messageId):
+    def getCost(self, groupId, messageId) -> Spending:
         try:
             cursor = self.sqlite_connection.cursor()
             cursor.execute(f'select * from costs where groupId = {groupId} and messageId = {messageId};')
             record = cursor.fetchall()
             record = record[0]
             result = { 'messageId': record[0], 'groupId': record[1], 'isCompleted': record[2], 'telegramFromId': record[3], 'costAmount': record[4], 'debtors': record[5], 'desc': record[6], 'date': datetime.fromtimestamp(record[7]) }
-            return result
+            return Spending(result)
         finally:
             cursor.close()
 

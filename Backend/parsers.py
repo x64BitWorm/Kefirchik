@@ -3,7 +3,7 @@ import re
 
 class ParsedQuery:
     def __init__(self, text, from_username):
-        self.debters = {}
+        self.debtors = {}
         self.comment = ""
         self.command = ""
         first_line_pattern = r'^/(?P<command>\w+)(?:@\w+)?\s+(?P<amount_expr>\S+)\s*$'
@@ -26,7 +26,7 @@ class ParsedQuery:
             total = calculations.parse_expression(amount_expr)
             self.amount = total[0]
         
-        # Following lines parsing (debters, debts, comments)
+        # Following lines parsing (debtors, debts, comments)
         for line in lines[1:]:
             if not line:
                 continue
@@ -38,10 +38,9 @@ class ParsedQuery:
                     for user in re.findall(r'@(\w+)', users_part):
                         if user in {"я", "Я"}:
                             user = from_username
-                        self.debters[user] = expr
+                        self.debtors[user] = expr
                 else:
                     raise Exception('Неверный формат описания траты')
             else:
                 self.comment += line + '\n'
         self.comment = self.comment.strip()
-        print(self.command, self.amount, self.debters, self.comment)

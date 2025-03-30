@@ -3,8 +3,8 @@ from database import IDatabase
 from message import TgMessage
 from handlers_facade import HandlersFacade
 from telegram import ForceReply, Update, constants, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters, CallbackContext
-from utils import BotException
+from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters, CallbackContext, CallbackQueryHandler
+from utils import BotException, BotWrongInputException
 
 def wrap(func):
     async def wrap_internal(update, context):
@@ -13,6 +13,8 @@ def wrap(func):
             await func(message)
         except BotException as e:
             await message.reply_text(str(e))
+        except BotWrongInputException as e:
+            await message.set_reaction(constants.ReactionEmoji.CLOWN_FACE)
         except:
             await message.set_reaction(constants.ReactionEmoji.CRYING_FACE)
     return wrap_internal
@@ -27,12 +29,12 @@ class TgWrapper:
         application = Application.builder().token(self.config.TOKEN).build()
         application.add_handler(CommandHandler("start", wrap(self.handlerFacade.start_command)))
         application.add_handler(CommandHandler("add", wrap(self.handlerFacade.add_command)))
-        #application.add_handler(CommandHandler("report", commands.report_command))
-        #application.add_handler(CommandHandler("reset", commands.reset_command))
+        application.add_handler(MessageHandler(filters.REPLY, wrap(self.handlerFacade.reply_command)))
+        application.add_handler(CommandHandler("report", wrap(self.handlerFacade.report_command)))
+        application.add_handler(CommandHandler("reset", wrap(self.handlerFacade.reset_command)))
         #application.add_handler(CallbackQueryHandler(commands.report_csv_callback, pattern='report-csv'))
-        #application.add_handler(CallbackQueryHandler(commands.cancel_callback, pattern='cancel-send'))
-        #application.add_handler(CallbackQueryHandler(commands.reset_callback, pattern='reset-costs'))
-        #application.add_handler(MessageHandler(filters.REPLY, commands.reply))
+        application.add_handler(CallbackQueryHandler(wrap(self.handlerFacade.cancel_callback), pattern='cancel-send'))
+        application.add_handler(CallbackQueryHandler(wrap(self.handlerFacade.reset_callback), pattern='reset-costs'))
         if self.config.USE_WEB_HOOKS:
             application.bot.set_webhook(url=f"https://kefirchik-bot.tw1.ru:8443", allowed_updates=Update.ALL_TYPES)
             application.run_webhook(

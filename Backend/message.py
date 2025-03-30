@@ -8,7 +8,16 @@ class IMessage:
     def getText(self) -> str:
         pass
 
+    def getReplyMessageId(self) -> int:
+        pass
+
+    def getCallbackQUery(self):
+        pass
+
     async def reply_text(self, message: str, markup = None) -> int:
+        pass
+
+    async def set_reaction(self, reaction: str):
         pass
 
     async def set_reaction(self, reaction):
@@ -30,9 +39,18 @@ class TgMessage(IMessage):
 
     def getText(self) -> str:
         return self.text
+    
+    def getReplyMessageId(self) -> int:
+        return self.msgObj.message.reply_to_message.id
+    
+    def getCallbackQUery(self):
+        return self.msgObj.callback_query
 
     async def reply_text(self, message: str, markup = None) -> int:
         return (await self.msgObj.message.reply_text(message, reply_markup=markup)).id
+    
+    async def set_reaction(self, reaction: str):
+        return (await self.msgObj.message.set_reaction(reaction)).id
 
     async def set_reaction(self, reaction):
         await self.msgObj.message.set_reaction(reaction)
