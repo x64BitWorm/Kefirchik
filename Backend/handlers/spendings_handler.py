@@ -1,10 +1,9 @@
-from message import IMessage
+from models.bot_api.bot_api_interfaces import IMessage
 from utils import BotException, BotWrongInputException
-from models.spending import Spending
-import calculations
-import json
+from models.db.spending import Spending
+import services.calculations as calculations
 from database import IDatabase
-from parsers import ParsedQuery
+from services.parsers import ParsedQuery
 
 def isSpendingCompleted(debtors: any):
     notFilledUsers = getUnfilledUsers(debtors)

@@ -1,4 +1,4 @@
-import calculations
+import services.calculations as calculations
 import re
 
 class ParsedQuery:

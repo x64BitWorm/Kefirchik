@@ -2,8 +2,8 @@ import sqlite3
 from datetime import datetime
 import json
 
-from models.group import Group
-from models.spending import Spending
+from models.db.group import Group
+from models.db.spending import Spending
 
 class IDatabase:
     def getGroup(self, id) -> Group:
@@ -23,13 +23,13 @@ class IDatabase:
         pass
 
 class Database(IDatabase):
-    def __init__(self, path: str):
-        self.sqlite_connection = sqlite3.connect(path)
+    def __init__(self, path: str = None):
+        self.sqlite_connection = sqlite3.connect(':memory:' if path == None else path)
         cursor = self.sqlite_connection.cursor()
         sqlite_select_query = "select sqlite_version();"
         cursor.execute(sqlite_select_query)
         record = cursor.fetchall()
-        print("SQLite version - ", record)
+        # record - SQLite version
         cursor.execute("CREATE TABLE IF NOT EXISTS groups (id NUMERIC (8) PRIMARY KEY NOT NULL UNIQUE, lastReport BLOB, startReset INTEGER);")
         cursor.execute("CREATE TABLE IF NOT EXISTS costs (messageId NUMERIC (8) PRIMARY KEY UNIQUE NOT NULL, groupId INTEGER REFERENCES groups (id) NOT NULL, isCompleted INTEGER (1) NOT NULL, telegramFromId TEXT NOT NULL, costAmount REAL (8) NOT NULL, Debtors TEXT NOT NULL, Desc TEXT NOT NULL, date INTEGER(4) NOT NULL);")
         cursor.close()
