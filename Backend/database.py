@@ -93,6 +93,8 @@ class Database(IDatabase):
             record = record[0]
             result = { 'messageId': record[0], 'groupId': record[1], 'isCompleted': record[2], 'telegramFromId': record[3], 'costAmount': record[4], 'debtors': record[5], 'desc': record[6], 'date': datetime.fromtimestamp(record[7]) }
             return Spending(result)
+        except:
+            return None
         finally:
             cursor.close()
 

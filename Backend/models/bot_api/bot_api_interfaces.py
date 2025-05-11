@@ -16,6 +16,9 @@ class IMessage:
     def getReplyMessageId(self) -> int:
         pass
 
+    def getReplyMessage(self) -> IMessage:
+        pass
+
     def getCallbackQuery(self) -> ICallback:
         pass
 

@@ -27,7 +27,9 @@ class HandlersFacade:
 
     async def reply_command(self, message: IMessage) -> None:
         group_id = self.db.getGroup(message.getChatId()).id
-        spending = self.db.getCost(group_id,  message.getReplyMessageId())    
+        spending = self.db.getCost(group_id, message.getReplyMessageId())
+        if spending is None:
+            return
         expression = spendings_handler.getExpressionOfReply(message.getText(), message.getUsername(), spending)
         spending.debtors[message.getUsername()] = expression
         completed = spendings_handler.isSpendingCompleted(spending.debtors)

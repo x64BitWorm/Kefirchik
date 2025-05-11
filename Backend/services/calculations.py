@@ -121,7 +121,10 @@ def calculate_spendings(expressions, total_sum):
   if a_total == 0:
     diff = total_sum - b_total
     if abs(diff) >= MONEY_ACCURACY * len(expressions):
-      raise BotException("Штаны не сошлись")
+      if diff > 0:
+        raise BotException(f"Не сошлось: не хватает {diff}")
+      else:
+        raise BotException(f"Не сошлось: лишние {-diff}")
     return [b + diff / len(expressions) for b, a in expressions_values]
   
   x = (total_sum - b_total) / a_total

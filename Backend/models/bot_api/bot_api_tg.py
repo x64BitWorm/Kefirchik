@@ -19,6 +19,12 @@ class TgMessage(IMessage):
     def getReplyMessageId(self) -> int:
         return self.msgObj.message.reply_to_message.id
     
+    def getReplyMessage(self) -> IMessage:
+        class ReplyMessage:
+            def __init__(self, message):
+                self.message = message
+        return TgMessage(ReplyMessage(self.msgObj.message.reply_to_message))
+    
     def getCallbackQuery(self) -> ICallback:
         return TgCallback(self.msgObj.callback_query)
 
