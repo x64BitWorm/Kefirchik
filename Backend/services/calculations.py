@@ -1,6 +1,7 @@
 import math
 import re
 from queue import LifoQueue
+from utils import BotException
 
 MONEY_ACCURACY = 5
 
@@ -120,7 +121,10 @@ def calculate_spendings(expressions, total_sum):
   if a_total == 0:
     diff = total_sum - b_total
     if abs(diff) >= MONEY_ACCURACY * len(expressions):
-      raise Exception("Shtani silno ne soshlis :(")
+      if diff > 0:
+        raise BotException(f"Не сошлось: не хватает {round(diff, 2)}")
+      else:
+        raise BotException(f"Не сошлось: лишние {round(-diff, 2)}")
     return [b + diff / len(expressions) for b, a in expressions_values]
   
   x = (total_sum - b_total) / a_total

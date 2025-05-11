@@ -1,4 +1,5 @@
 ### Kefirchik
+Most honest division of expenses in telegram groups
 by 42
 
 
@@ -43,3 +44,10 @@ Run -
 ```console
 docker-compose up --env-file '/var/lib/kepirchik/.env' -d --force-recreate --build
 ```
+
+# Run/add tests
+Run - `python3 tests_runner.py` \
+Add new tests to `tests/main_flow_test.py` or another `tests/*_test.py` file
+
+# More about implementation
+[Scheme](./Assets/DEV.md)
