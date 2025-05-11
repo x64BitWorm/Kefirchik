@@ -1,7 +1,3 @@
-'''
-documentation
-'''
-
 import logging
 from config import Config
 from tg_wrapper import TgWrapper
