@@ -4,24 +4,22 @@ import csv
 import io
 import random
 
+from handlers import spendings_handler
 from models.dto.report_dto import ReportInfoDto, ReportOverviewDto, ReportTransactionDto
 from models.db.spending import Spending
 
 # Возвращает случайную из незавершенных трат
 def getUncompletedSpending(spendings: list[Spending]) -> Spending | None:
-    unCompleted = []
-    for item in spendings:
-        if item.isCompleted == 0:
-            unCompleted.append(item)
-    if len(unCompleted) == 0:
-        return None
-    return random.choice(unCompleted)
+    uncompletedSpendings = [spending for spending in spendings if not spending.isCompleted]
+    return random.choice(uncompletedSpendings) if uncompletedSpendings else None
 
 # trati - [{'amount', 'papik', 'debtors': {name: amount}}]
 # returns - {'papiks': {name: amount}, 'debtors': {name: amount}, 'balances': {name: amount}}
 def generateReport(trati: list[Spending]) -> ReportOverviewDto:
     data = ReportOverviewDto()
     for trata in trati:
+        if not trata.isCompleted:
+            continue
         amount = trata.costAmount
         if trata.telegramFromId not in data.papiks:
             data.papiks[trata.telegramFromId] = 0
@@ -37,8 +35,6 @@ def generateReport(trati: list[Spending]) -> ReportOverviewDto:
                 data.balances[debtor] = 0
             data.balances[debtor] -= debt
             amount -= debt
-        if not trata.isCompleted:
-            raise ValueError('Трата не завершена')
     return data
 
 # balances - {name: amount}
@@ -90,6 +86,8 @@ def generateCsv(spendings: list[Spending]) -> io.StringIO:
 
     writer.writerow(['Наименование', 'Кто', 'Сколько'] + list(report.balances.keys()) + ['Дата'])
     for trata in spendings:
+        if not trata.isCompleted:
+            continue
         debts = [''] * len(names)
         for debtor, amount in trata.debtors.items():
             debts[nameId[debtor]] = round(amount, 2)
@@ -107,6 +105,10 @@ def getReportInfo(spendings: list[Spending]) -> ReportInfoDto:
         for transaction in transactions:
             if transaction.amount >= 0.01:
                 answer += f'{transaction.fromNick} ➡️ {transaction.toNick} {round(transaction.amount, 2)}🎪\n'
-        return ReportInfoDto(len(transactions), answer)
+        return ReportInfoDto(transactions=len(transactions), text=answer)
     else:
-        return ReportInfoDto(0, '⚠️ Нет записанных трат')
+        return ReportInfoDto(transactions=0, text='⚠️ Нет записанных трат')
+
+def getUncompletedWarningText(uncompletedSpending: Spending) -> str:
+    unfilledUsers = spendings_handler.getUnfilledUsers(uncompletedSpending.debtors)
+    return '❗️ Есть незакрытая трата у' + ' @'.join(['']+unfilledUsers) + '\n\n'

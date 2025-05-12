@@ -41,19 +41,18 @@ class HandlersFacade:
     async def report_command(self, message: IMessage) -> None:
         group = self.db.getGroup(message.getChatId())
         spendings = self.db.getSpendings(group.id)
-        uncompletedSpending = reports_handler.getUncompletedSpending(spendings)
-        if uncompletedSpending != None:
-            notFilled = spendings_handler.getUnfilledUsers(uncompletedSpending.debtors)
-            await message.reply_text('Сначала завершите трату'+' @'.join(['']+notFilled), reply_to_message_id=uncompletedSpending.messageId)
-            return
-        try:
-            report = reports_handler.getReportInfo(spendings)
-            if report.transactions > 0:
-                await message.reply_text(report.text, reply_markup=getCsvReportMarkup())
-            else:
-                await message.reply_text(report.text)
-        except Exception as e:
-            raise BotException('⚠️ ' + str(e))
+
+        report = reports_handler.getReportInfo(spendings)
+        if report.transactions > 0:
+            uncompletedSpending = reports_handler.getUncompletedSpending(spendings)
+            warningUncompleted = ''
+            reply_to_message_id = None
+            if uncompletedSpending != None:
+                warningUncompleted = reports_handler.getUncompletedWarningText(uncompletedSpending)
+                reply_to_message_id = uncompletedSpending.messageId
+            await message.reply_text(warningUncompleted + report.text, reply_markup=getCsvReportMarkup(), reply_to_message_id=reply_to_message_id)
+        else:
+            await message.reply_text(report.text)
 
     async def reset_command(self, message: IMessage) -> None:
         group_id = self.db.getGroup(message.getChatId()).id
