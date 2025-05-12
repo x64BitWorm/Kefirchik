@@ -43,7 +43,7 @@ class HandlersFacade:
         spendings = self.db.getSpendings(group.id)
 
         report = reports_handler.getReportInfo(spendings)
-        if report.transactions > 0:
+        if report.transactions_count > 0:
             uncompletedSpending = reports_handler.getUncompletedSpending(spendings)
             warningUncompleted = ''
             reply_to_message_id = None

@@ -3,6 +3,7 @@ from datetime import date
 import csv
 import io
 import random
+from collections import defaultdict
 
 from handlers import spendings_handler
 from models.dto.report_dto import ReportInfoDto, ReportOverviewDto, ReportTransactionDto
@@ -13,90 +14,98 @@ def getUncompletedSpending(spendings: list[Spending]) -> Spending | None:
     uncompletedSpendings = [spending for spending in spendings if not spending.isCompleted]
     return random.choice(uncompletedSpendings) if uncompletedSpendings else None
 
-# trati - [{'amount', 'papik', 'debtors': {name: amount}}]
-# returns - {'papiks': {name: amount}, 'debtors': {name: amount}, 'balances': {name: amount}}
-def generateReport(trati: list[Spending]) -> ReportOverviewDto:
-    data = ReportOverviewDto()
-    for trata in trati:
-        if not trata.isCompleted:
+# Составить обзор трат: папики, должники, их суммы и балансы
+def generateReport(spendings: list[Spending]) -> ReportOverviewDto:
+    papiks_totals = defaultdict(int)
+    balance_of = defaultdict(int)
+    debtors_totals = defaultdict(int)
+    for spending in spendings:
+        if not spending.isCompleted:
             continue
-        amount = trata.costAmount
-        if trata.telegramFromId not in data.papiks:
-            data.papiks[trata.telegramFromId] = 0
-        data.papiks[trata.telegramFromId] += trata.costAmount
-        if trata.telegramFromId not in data.balances:
-            data.balances[trata.telegramFromId] = 0
-        data.balances[trata.telegramFromId] += trata.costAmount
-        for debtor, debt in trata.debtors.items():
-            if debtor not in data.debtors:
-                data.debtors[debtor] = 0
-            data.debtors[debtor] += debt
-            if debtor not in data.balances:
-                data.balances[debtor] = 0
-            data.balances[debtor] -= debt
-            amount -= debt
-    return data
+        papik = spending.telegramFromId
+        cost = spending.costAmount
+        papiks_totals[papik] += cost
+        balance_of[papik] += cost
+        for debtor, share in spending.debtors.items():
+            debtors_totals[debtor] += share
+            balance_of[debtor] -= share
+    return ReportOverviewDto(
+        papiks=dict(papiks_totals),
+        debtors=dict(debtors_totals),
+        balances=dict(balance_of)
+    )
 
-# balances - {name: amount}
-# returns - [{'from', 'to', 'amount'}]
+# Составить список транзакций
 def calculateTransactions(balances: dict[str, float]) -> list[ReportTransactionDto]:
     papiks = PriorityQueue()
-    for k, v in dict(filter(lambda x:x[1]>0, balances.items())).items():
-        papiks.put((-v, k))
-    doljniks = PriorityQueue()
-    for k, v in dict(filter(lambda x:x[1]<0, balances.items())).items():
-        doljniks.put((v, k))
-    transactions = []
-    while not papiks.empty() and not doljniks.empty():
-        doljnik = {}
-        doljnik['amount'], doljnik['name'] = doljniks.get()
-        papik = {}
-        papik['amount'], papik['name'] = papiks.get()
-        amount = min(-papik['amount'], -doljnik['amount'])
-        transactions.append(ReportTransactionDto(from_nick=doljnik['name'], to_nick=papik['name'], amount=amount))
-        if -papik['amount'] < -doljnik['amount']:
-            doljniks.put((doljnik['amount']+amount, doljnik['name']))
-        elif -papik['amount'] > -doljnik['amount']:
-            papiks.put((papik['amount'] + amount, papik['name']))
+    debtors = PriorityQueue()
+    # the values negated for correct ordering
+    for user, amount in balances.items():
+        if amount > 0:
+            papiks.put((-amount, user))
+        elif amount < 0:
+            debtors.put((amount, user))
+    transactions: list[ReportTransactionDto] = []
+    while not papiks.empty() and not debtors.empty():
+        debt_amount, debtor = debtors.get()
+        papik_amount, papik = papiks.get()
+        debt_amount = -debt_amount
+        papik_amount = -papik_amount
+        amount = min(papik_amount, debt_amount)
+        transactions.append(ReportTransactionDto(
+            from_nick=debtor,
+            to_nick=papik,
+            amount=amount
+        ))
+        if papik_amount > amount:
+            papiks.put((-(papik_amount - amount), papik))
+        elif debt_amount > amount:
+            debtors.put((-(debt_amount - amount), debtor))
     return transactions
 
-# spendings, report, transactions
-# returns stringIO document
+# Сгенерить csv по всем завершённым тратам
 def generateCsv(spendings: list[Spending]) -> io.StringIO:
-    report = generateReport(spendings)
-    doc = io.StringIO()
-    writer = csv.writer(doc)
-    names = list(report.balances.keys())
-    nameId = {name: id for id, name in enumerate(names)}
-    
-    l = [''] * len(names)
-    for papik, amount in report.papiks.items():
-        l[nameId[papik]] = round(amount, 2)
-    writer.writerow(['', 'Всего', 'заплатил'] + l)
+    overview = generateReport(spendings)
+    output = io.StringIO()
+    writer = csv.writer(output)
 
-    l = [''] * len(names)
-    for debtor, amount in report.debtors.items():
-        l[nameId[debtor]] = round(amount, 2)
-    writer.writerow(['', '', 'должен заплатить'] + l)
-    
-    l = [''] * len(names)
-    for balance, amount in report.balances.items():
-        l[nameId[balance]] = round(amount, 2)
-    writer.writerow(['', '', 'баланс'] + l)
+    names = list(overview.balances.keys())
+    summary_rows = [
+        ("", "Всего",         "заплатил", overview.papiks),
+        ("",      "", "должен заплатить", overview.debtors),
+        ("",      "",           "баланс", overview.balances),
+    ]
+    for _, col2, col3, data in summary_rows:
+        row = ["", col2, col3] + [
+            round(data[name], 2) if name in data else "" 
+            for name in names
+        ]
+        writer.writerow(row)
 
-    writer.writerow(['Наименование', 'Кто', 'Сколько'] + list(report.balances.keys()) + ['Дата'])
-    for trata in spendings:
-        if not trata.isCompleted:
+    writer.writerow(["Коммент", "Кто", "Сколько"] + names + ["Дата"])
+
+    for spending in spendings:
+        if not spending.isCompleted:
             continue
-        debts = [''] * len(names)
-        for debtor, amount in trata.debtors.items():
-            debts[nameId[debtor]] = round(amount, 2)
-        writer.writerow([trata.desc, trata.telegramFromId, round(trata.costAmount, 2)] + debts + [trata.date])
-    doc = io.StringIO('\ufeff' + doc.getvalue()) # UTF-8 BOM
-    doc.name = f'Отчет_{date.today()}.csv'
-    doc.seek(0)
-    return doc
+        debt_shares = [
+            round(spending.debtors[name], 2) if name in spending.debtors else ""
+            for name in names
+        ]
+        writer.writerow([
+            spending.desc,
+            spending.telegramFromId,
+            round(spending.costAmount, 2),
+            *debt_shares,
+            spending.date
+        ])
 
+    csv_content = output.getvalue()
+    final_io = io.StringIO("\ufeff" + csv_content)
+    final_io.name = f"Отчёт_{date.today():%Y-%m-%d}.csv"
+    final_io.seek(0)
+    return final_io
+
+# Составить вывод о транзакциях
 def getReportInfo(spendings: list[Spending]) -> ReportInfoDto:
     report = generateReport(spendings)
     transactions = calculateTransactions(report.balances)
@@ -105,10 +114,11 @@ def getReportInfo(spendings: list[Spending]) -> ReportInfoDto:
         for transaction in transactions:
             if transaction.amount >= 0.01:
                 answer += f'{transaction.fromNick} ➡️ {transaction.toNick} {round(transaction.amount, 2)}🎪\n'
-        return ReportInfoDto(transactions=len(transactions), text=answer)
+        return ReportInfoDto(transactions_count=len(transactions), text=answer)
     else:
-        return ReportInfoDto(transactions=0, text='⚠️ Нет записанных трат')
+        return ReportInfoDto(transactions_count=0, text='⚠️ Нет записанных трат')
 
+# Составить текст о незавершённой трате
 def getUncompletedWarningText(uncompletedSpending: Spending) -> str:
     unfilledUsers = spendings_handler.getUnfilledUsers(uncompletedSpending.debtors)
     return '❗️ Есть незакрытая трата у' + ' @'.join(['']+unfilledUsers) + '\n\n'
