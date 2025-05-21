@@ -37,6 +37,7 @@ class TgWrapper:
         application.add_handler(CallbackQueryHandler(wrap(self.callbackFacade.report_csv_callback), pattern='report-csv'))
         application.add_handler(CallbackQueryHandler(wrap(self.callbackFacade.cancel_callback), pattern='cancel-send'))
         application.add_handler(CallbackQueryHandler(wrap(self.callbackFacade.reset_callback), pattern='reset-costs'))
+        application.add_handler(CallbackQueryHandler(wrap(self.callbackFacade.last_debtor_approve_callback), pattern='last-debtor-approve'))
         if self.config.USE_WEB_HOOKS:
             application.bot.set_webhook(url=f"https://kefirchik-bot.tw1.ru:8443", allowed_updates=Update.ALL_TYPES)
             application.run_webhook(

@@ -1,8 +1,7 @@
-from models.bot_api.bot_api_interfaces import IMessage
+from models.dto.spendings_dto import SpendingMetaInfo
 from utils import BotException, BotWrongInputException
 from models.db.spending import Spending
 import services.calculations as calculations
-from database import IDatabase
 from services.parsers import ParsedQuery
 
 def isSpendingCompleted(debtors: any):
@@ -28,6 +27,12 @@ def getDebtorsWithAmounts(debtors, amount):
     for i, (k, v) in enumerate(debtors.items()):
         debtors[k] = ans[i]
     return debtors
+
+def getSpendingMetaInfo(spending: Spending) -> SpendingMetaInfo:
+    notFilledUsers = getUnfilledUsers(spending.debtors)
+    expressions = list(filter(lambda x: x != '', spending.debtors.values()))
+    spendingType, remainingAmount = calculations.get_spending_meta_info(expressions, spending.costAmount)
+    return SpendingMetaInfo(type=spendingType, remainingAmount=remainingAmount, notFilledUsers=notFilledUsers)
 
 def getExpressionOfReply(text: str, user: str, spending: Spending) -> str:
     expression = text
