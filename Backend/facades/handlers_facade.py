@@ -1,6 +1,8 @@
 import json
+from services.constants import textLastDebtorQuestion
+from models.dto.spendings_dto import SpendingType
 from handlers import reports_handler
-from services.telegram_markups import getCsvReportMarkup, getResetMarkup
+from services.telegram_markups import getCsvReportMarkup, getLastDebtorApproveMarkup, getResetMarkup
 from utils import BotException
 import services.parsers as parsers
 from handlers.help_handler import *
@@ -30,13 +32,19 @@ class HandlersFacade:
         spending = self.db.getCost(group_id, message.getReplyMessageId())
         if spending is None:
             return
+        
         expression = spendings_handler.getExpressionOfReply(message.getText(), message.getUsername(), spending)
         spending.debtors[message.getUsername()] = expression
-        completed = spendings_handler.isSpendingCompleted(spending.debtors)
-        if completed:
+        spendingCompleted = spendings_handler.isSpendingCompleted(spending.debtors)
+        if spendingCompleted:
             spending.debtors = spendings_handler.getDebtorsWithAmounts(spending.debtors, spending.costAmount) # resolve x's
-        self.db.updateCost(group_id, message.getReplyMessageId(), completed, json.dumps(spending.debtors))
-        await message.set_reaction(constants.ReactionEmoji.FIRE if completed else constants.ReactionEmoji.THUMBS_UP)
+        self.db.updateCost(group_id, message.getReplyMessageId(), spendingCompleted, json.dumps(spending.debtors))
+        await message.set_reaction(constants.ReactionEmoji.FIRE if spendingCompleted else constants.ReactionEmoji.THUMBS_UP)
+
+        metaInfo = spendings_handler.getSpendingMetaInfo(spending)
+        if len(metaInfo.notFilledUsers) == 1 and metaInfo.type == SpendingType.SIMPLE:
+            replyMessage = message.getReplyMessage()
+            await replyMessage.reply_text(textLastDebtorQuestion(metaInfo.notFilledUsers[0], metaInfo.remainingAmount), reply_markup=getLastDebtorApproveMarkup())
     
     async def report_command(self, message: IMessage) -> None:
         group = self.db.getGroup(message.getChatId())

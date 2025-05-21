@@ -5,6 +5,7 @@ import io
 import random
 from collections import defaultdict
 
+from services.formatters import formatMoney
 from handlers import spendings_handler
 from models.dto.report_dto import ReportInfoDto, ReportOverviewDto, ReportTransactionDto
 from models.db.spending import Spending
@@ -77,7 +78,7 @@ def generateCsv(spendings: list[Spending]) -> io.StringIO:
     ]
     for _, col2, col3, data in summary_rows:
         row = ["", col2, col3] + [
-            round(data[name], 2) if name in data else "" 
+            formatMoney(data[name]) if name in data else "" 
             for name in names
         ]
         writer.writerow(row)
@@ -88,13 +89,13 @@ def generateCsv(spendings: list[Spending]) -> io.StringIO:
         if not spending.isCompleted:
             continue
         debt_shares = [
-            round(spending.debtors[name], 2) if name in spending.debtors else ""
+            formatMoney(spending.debtors[name]) if name in spending.debtors else ""
             for name in names
         ]
         writer.writerow([
             spending.desc,
             spending.telegramFromId,
-            round(spending.costAmount, 2),
+            formatMoney(spending.costAmount),
             *debt_shares,
             spending.date
         ])
@@ -113,7 +114,7 @@ def getReportInfo(spendings: list[Spending]) -> ReportInfoDto:
     if len(transactions) > 0:
         for transaction in transactions:
             if transaction.amount >= 0.01:
-                answer += f'{transaction.fromNick} ➡️ {transaction.toNick} {round(transaction.amount, 2)}🎪\n'
+                answer += f'{transaction.fromNick} ➡️ {transaction.toNick} {formatMoney(transaction.amount)}🎪\n'
         return ReportInfoDto(transactions_count=len(transactions), text=answer)
     else:
         return ReportInfoDto(transactions_count=0, text='⚠️ Нет записанных трат')
