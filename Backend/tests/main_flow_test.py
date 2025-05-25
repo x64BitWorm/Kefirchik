@@ -134,5 +134,16 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
         await emu.sendMessage('alice', '/report')
         self.assertEqual('bob ➡️ alice 300🎪\neve ➡️ alice 200🎪\n', emu.getRepliedText())
 
+        await emu.sendMessage('alice', '/add 100\n@bob 30\n@eve\n@alex\nburger')
+        self.assertEqual('Запомнил🍶 ждем  @eve @alex', emu.getRepliedText())
+
+        await emu.sendMessage('eve', '90', reply_id=8) # Reply to 2 message in chat
+        self.assertEqual(constants.ReactionEmoji.THUMBS_UP, emu.getReaction())
+        self.assertEqual('@alex должен -20?', emu.getRepliedText())
+
+        await emu.pressButton('alex', 'last-debtor-approve/yes', msg_id=10) # Press button on 4 message in chat
+        self.assertEqual(constants.ReactionEmoji.FIRE, emu.getReaction())
+        self.assertEqual('@alex согласился взять остаток -20', emu.getEditedText())        
+
 if __name__ == "__main__":
     unittest.main()

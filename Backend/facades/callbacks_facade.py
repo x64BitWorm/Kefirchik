@@ -55,7 +55,7 @@ class CallbacksFacade:
         metaInfo = spendings_handler.getSpendingMetaInfo(spending)
         await query.answer()
         fromUser = query.getUsername()
-        if metaInfo.notFilledUsers != [fromUser] or metaInfo.type != SpendingType.SIMPLE or metaInfo.remainingAmount <= 0:
+        if metaInfo.notFilledUsers != [fromUser] or metaInfo.type != SpendingType.SIMPLE or metaInfo.remainingAmount == 0:
             return
         group_id = self.db.getGroup(chatId).id
         buttonData = query.getData()
