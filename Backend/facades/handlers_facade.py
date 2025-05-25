@@ -41,7 +41,7 @@ class HandlersFacade:
         await message.set_reaction(constants.ReactionEmoji.FIRE if spendingCompleted else constants.ReactionEmoji.THUMBS_UP)
 
         metaInfo = spendings_handler.getSpendingMetaInfo(spending)
-        if len(metaInfo.notFilledUsers) == 1 and metaInfo.type == SpendingType.SIMPLE:
+        if not spendingCompleted and len(metaInfo.notFilledUsers) == 1 and metaInfo.type == SpendingType.SIMPLE:
             replyMessage = message.getReplyMessage()
             replyMessageText = textLastDebtorQuestion(metaInfo.notFilledUsers[0], metaInfo.remainingAmount)
             await replyMessage.reply_text(replyMessageText, reply_markup=getLastDebtorApproveMarkup())
