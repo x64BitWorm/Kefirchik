@@ -2,8 +2,7 @@ import json
 from services.constants import textLastDebtorQuestion
 from models.dto.spendings_dto import SpendingType
 from handlers import reports_handler
-from services.telegram_markups import getCsvReportMarkup, getLastDebtorApproveMarkup, getResetMarkup
-from utils import BotException
+from services.telegram_markups import getCancelMarkup, getCsvReportMarkup, getLastDebtorApproveMarkup, getResetMarkup
 import services.parsers as parsers
 from handlers.help_handler import *
 import handlers.spendings_handler as spendings_handler
@@ -24,7 +23,7 @@ class HandlersFacade:
         reply_text = spendings_handler.getReplyText(data)
         spendingCompleted = spendings_handler.isSpendingCompleted(data.debtors)
         debtors = spendings_handler.getDebtorsWithAmounts(data.debtors, data.amount) if spendingCompleted else data.debtors
-        reply_message_id = await message.reply_text(reply_text, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton('Отмена', callback_data='cancel-send')]]))
+        reply_message_id = await message.reply_text(reply_text, reply_markup=getCancelMarkup())
         self.db.insertCost(reply_message_id, message.getChatId(), spendingCompleted, message.getUsername(), data.amount, debtors, data.comment)
 
     async def reply_command(self, message: IMessage) -> None:
@@ -44,7 +43,8 @@ class HandlersFacade:
         metaInfo = spendings_handler.getSpendingMetaInfo(spending)
         if len(metaInfo.notFilledUsers) == 1 and metaInfo.type == SpendingType.SIMPLE:
             replyMessage = message.getReplyMessage()
-            await replyMessage.reply_text(textLastDebtorQuestion(metaInfo.notFilledUsers[0], metaInfo.remainingAmount), reply_markup=getLastDebtorApproveMarkup())
+            replyMessageText = textLastDebtorQuestion(metaInfo.notFilledUsers[0], metaInfo.remainingAmount)
+            await replyMessage.reply_text(replyMessageText, reply_markup=getLastDebtorApproveMarkup())
     
     async def report_command(self, message: IMessage) -> None:
         group = self.db.getGroup(message.getChatId())

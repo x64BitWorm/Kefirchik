@@ -1,10 +1,8 @@
 from enum import Enum
 
 class SpendingType(Enum):
-    # Without X's
-    SIMPLE = 1,
-    # With X's
-    RELATIVE = 2,
+    SIMPLE   = 1,   # Without X's
+    RELATIVE = 2,   # With X's
 
 class SpendingMetaInfo:
     def __init__(self, type: SpendingType, remainingAmount: float, notFilledUsers: list[str]):

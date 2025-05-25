@@ -108,7 +108,7 @@ def validate_brackets(expr: str):
 def validate_expression(expr: str):
   validate_brackets(expr)
 
-def parse_expression(expr: str):
+def parse_expression(expr: str | float):
   expr = str(expr).lower().replace(' ', '').replace('х','x').replace(',','.')
   validate_expression(expr)
   return calculate(expr)
