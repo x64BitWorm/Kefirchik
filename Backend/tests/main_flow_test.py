@@ -145,5 +145,48 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(constants.ReactionEmoji.FIRE, emu.getReaction())
         self.assertEqual('@alex согласился взять остаток -20', emu.getEditedText())        
 
+    async def test_approve_negative_debt(self):
+        emu = ChatEmu()
+
+        await emu.sendMessage('alice', '/add 100\n@bob @eve @alex')
+        self.assertEqual('Запомнил🍶 ждем  @bob @eve @alex', emu.getRepliedText())
+
+        await emu.sendMessage('bob', '60', reply_id=2)
+        self.assertEqual(constants.ReactionEmoji.THUMBS_UP, emu.getReaction())
+
+        await emu.sendMessage('eve', '50', reply_id=2)
+        self.assertEqual(constants.ReactionEmoji.THUMBS_UP, emu.getReaction())
+        
+        self.assertEqual('@alex должен -10?', emu.getRepliedText())
+        await emu.pressButton('alex', 'last-debtor-approve/yes', msg_id=5)
+
+        self.assertEqual(constants.ReactionEmoji.FIRE, emu.getReaction())
+        self.assertEqual('@alex согласился взять остаток -10', emu.getEditedText())
+
+        await emu.sendMessage('alice', '/report')
+        self.assertEqual('bob ➡️ alice 60🎪\neve ➡️ alice 40🎪\neve ➡️ alex 10🎪\n', emu.getRepliedText())
+
+    
+    async def test_approve_zero_debt(self):
+        emu = ChatEmu()
+
+        await emu.sendMessage('alice', '/add 100\n@bob @eve @alex')
+        self.assertEqual('Запомнил🍶 ждем  @bob @eve @alex', emu.getRepliedText())
+
+        await emu.sendMessage('bob', '60', reply_id=2)
+        self.assertEqual(constants.ReactionEmoji.THUMBS_UP, emu.getReaction())
+
+        await emu.sendMessage('eve', '40', reply_id=2)
+        self.assertEqual(constants.ReactionEmoji.THUMBS_UP, emu.getReaction())
+
+        self.assertEqual('@alex должен 0?', emu.getRepliedText())
+        await emu.pressButton('alex', 'last-debtor-approve/yes', msg_id=5)
+
+        self.assertEqual(constants.ReactionEmoji.FIRE, emu.getReaction())
+        self.assertEqual('@alex согласился взять остаток 0', emu.getEditedText())
+
+        await emu.sendMessage('alice', '/report')
+        self.assertEqual('bob ➡️ alice 60🎪\neve ➡️ alice 40🎪\n', emu.getRepliedText())
+
 if __name__ == "__main__":
     unittest.main()
