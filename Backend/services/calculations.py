@@ -1,6 +1,8 @@
 import math
 import re
 from queue import LifoQueue
+from services.formatters import formatMoney
+from models.dto.spendings_dto import SpendingType
 from utils import BotException
 
 MONEY_ACCURACY = 5
@@ -106,12 +108,13 @@ def validate_brackets(expr: str):
 def validate_expression(expr: str):
   validate_brackets(expr)
 
-def parse_expression(expr: str):
-  expr = expr.lower().replace(' ', '').replace('х','x').replace(',','.')
+def parse_expression(expr: str | float):
+  expr = str(expr).lower().replace(' ', '').replace('х','x').replace(',','.')
   validate_expression(expr)
   return calculate(expr)
 
-def calculate_spendings(expressions, total_sum):
+# Matches each expression with its calculated value
+def calculate_spendings(expressions, total_sum) -> list[float]:
   expressions_values = list(map(parse_expression, expressions))
   expressions_sum = [sum(i) for i in zip(*expressions_values)]
   # a * x + b = total_sum
@@ -122,11 +125,23 @@ def calculate_spendings(expressions, total_sum):
     diff = total_sum - b_total
     if abs(diff) >= MONEY_ACCURACY * len(expressions):
       if diff > 0:
-        raise BotException(f"Не сошлось: не хватает {round(diff, 2)}")
+        raise BotException(f"Не сошлось: не хватает {formatMoney(diff)}")
       else:
-        raise BotException(f"Не сошлось: лишние {round(-diff, 2)}")
+        raise BotException(f"Не сошлось: лишние {formatMoney(-diff)}")
     return [b + diff / len(expressions) for b, a in expressions_values]
   
   x = (total_sum - b_total) / a_total
   
   return [a * x + b for b, a in expressions_values]
+
+def get_spending_meta_info(expressions: list[str], total_sum: float) -> tuple[SpendingType, float]:
+  expressions_values = list(map(parse_expression, expressions))
+  spendingType = SpendingType.SIMPLE
+  currentAmount = 0.0
+  for _, a in expressions_values:
+    if a > 0:
+      spendingType = SpendingType.RELATIVE
+      break
+  if spendingType == SpendingType.SIMPLE:
+    currentAmount = sum([b for b, _ in expressions_values])
+  return (spendingType, total_sum - currentAmount)

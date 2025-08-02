@@ -1,7 +1,8 @@
 import json
+from services.constants import textLastDebtorQuestion
+from models.dto.spendings_dto import SpendingType
 from handlers import reports_handler
-from services.telegram_markups import getCsvReportMarkup, getResetMarkup
-from utils import BotException
+from services.telegram_markups import getCancelMarkup, getCsvReportMarkup, getLastDebtorApproveMarkup, getResetMarkup
 import services.parsers as parsers
 from handlers.help_handler import *
 import handlers.spendings_handler as spendings_handler
@@ -22,7 +23,7 @@ class HandlersFacade:
         reply_text = spendings_handler.getReplyText(data)
         spendingCompleted = spendings_handler.isSpendingCompleted(data.debtors)
         debtors = spendings_handler.getDebtorsWithAmounts(data.debtors, data.amount) if spendingCompleted else data.debtors
-        reply_message_id = await message.reply_text(reply_text, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton('Отмена', callback_data='cancel-send')]]))
+        reply_message_id = await message.reply_text(reply_text, reply_markup=getCancelMarkup())
         self.db.insertCost(reply_message_id, message.getChatId(), spendingCompleted, message.getUsername(), data.amount, debtors, data.comment)
 
     async def reply_command(self, message: IMessage) -> None:
@@ -30,13 +31,20 @@ class HandlersFacade:
         spending = self.db.getCost(group_id, message.getReplyMessageId())
         if spending is None:
             return
+        
         expression = spendings_handler.getExpressionOfReply(message.getText(), message.getUsername(), spending)
         spending.debtors[message.getUsername()] = expression
-        completed = spendings_handler.isSpendingCompleted(spending.debtors)
-        if completed:
+        spendingCompleted = spendings_handler.isSpendingCompleted(spending.debtors)
+        if spendingCompleted:
             spending.debtors = spendings_handler.getDebtorsWithAmounts(spending.debtors, spending.costAmount) # resolve x's
-        self.db.updateCost(group_id, message.getReplyMessageId(), completed, json.dumps(spending.debtors))
-        await message.set_reaction(constants.ReactionEmoji.FIRE if completed else constants.ReactionEmoji.THUMBS_UP)
+        self.db.updateCost(group_id, message.getReplyMessageId(), spendingCompleted, json.dumps(spending.debtors))
+        await message.set_reaction(constants.ReactionEmoji.FIRE if spendingCompleted else constants.ReactionEmoji.THUMBS_UP)
+
+        metaInfo = spendings_handler.getSpendingMetaInfo(spending)
+        if not spendingCompleted and len(metaInfo.notFilledUsers) == 1 and metaInfo.type == SpendingType.SIMPLE:
+            replyMessage = message.getReplyMessage()
+            replyMessageText = textLastDebtorQuestion(metaInfo.notFilledUsers[0], metaInfo.remainingAmount)
+            await replyMessage.reply_text(replyMessageText, reply_markup=getLastDebtorApproveMarkup())
     
     async def report_command(self, message: IMessage) -> None:
         group = self.db.getGroup(message.getChatId())

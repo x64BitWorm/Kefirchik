@@ -13,6 +13,8 @@ class ChatEmu:
 
     async def sendMessage(self, user: str, text: str, reply_id: int = None):
         msg = TestMessage(self.ctx, user, text, reply_id)
+        self.ctx.messages[msg.message_id] = msg
+        self.ctx.last_msg_id += 1
         if reply_id == None:
             command = text.split()[0]
             if command == '/start':
@@ -25,16 +27,17 @@ class ChatEmu:
                 await self.handlerFacade.reset_command(msg)
         else:
             await self.handlerFacade.reply_command(msg)
-        self.ctx.last_msg_id += 1
 
     async def pressButton(self, user: str, callbackData: str, msg_id: int):
-        msg = TestMessage(self.ctx, user, '', callback_data=callbackData, message_id=msg_id)
+        msg = TestMessage(self.ctx, user, '', callback_data=callbackData, message_id=msg_id, reply_id=self.ctx.messages[msg_id].getReplyMessageId())
         if callbackData == 'report-csv':
             await self.callbackFacade.report_csv_callback(msg)
         elif callbackData == 'cancel-send':
             await self.callbackFacade.cancel_callback(msg)
         elif callbackData == 'reset-costs':
             await self.callbackFacade.reset_callback(msg)
+        elif callbackData.startswith('last-debtor-approve'):
+            await self.callbackFacade.last_debtor_approve_callback(msg)
         
 
     def getRepliedText(self) -> str | None:

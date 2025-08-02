@@ -2,10 +2,11 @@
 Most honest division of expenses in telegram groups
 by 42
 
-
 * Python
 * Telegram API
 * SQLite
+
+Running bot [available](https://t.me/kefirchik42_bot) in telegram
 
 # Preparing
 Generate certificate for telegram webhook mode
