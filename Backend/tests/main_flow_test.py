@@ -165,7 +165,6 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
 
         await emu.sendMessage('alice', '/report')
         self.assertEqual('bob ➡️ alice 60🎪\neve ➡️ alice 40🎪\neve ➡️ alex 10🎪\n', emu.getRepliedText())
-
     
     async def test_approve_zero_debt(self):
         emu = ChatEmu()
@@ -187,6 +186,51 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
 
         await emu.sendMessage('alice', '/report')
         self.assertEqual('bob ➡️ alice 60🎪\neve ➡️ alice 40🎪\n', emu.getRepliedText())
+
+    async def test_reset(self):
+        emu = ChatEmu()
+
+        await emu.sendMessage('alice', '/add 100\n@bob @eve @alex')
+        self.assertEqual('Запомнил🍶 ждем  @bob @eve @alex', emu.getRepliedText())
+
+        await emu.sendMessage('bob', '/add 200\n@bob @eve @alex x')
+        self.assertEqual('Запомнил🍶', emu.getRepliedText())
+
+        await emu.sendMessage('alice', '/report')
+        self.assertEqual('❗️ Есть незакрытая трата у @bob @eve @alex\n\nalex ➡️ bob 66.67🎪\neve ➡️ bob 66.67🎪\n', emu.getRepliedText())
+
+        await emu.sendMessage('alice', '/reset')
+        self.assertEqual('@alice @bob', emu.getRepliedText())
+
+        await emu.pressButton('alex', 'reset-costs', msg_id=8)
+        try:
+            self.assertEqual('Z Z Z', emu.getEditedText())
+        except IndexError:
+            pass
+        except Exception as e:
+            self.fail(f"Unexpected exception raised: {e}")
+        else:
+            self.fail("Expected IndexError, but no exception was raised")
+        
+        await emu.pressButton('alice', 'reset-costs', msg_id=8)
+        self.assertEqual('@bob', emu.getEditedText())
+
+        await emu.pressButton('alice', 'reset-costs', msg_id=8)
+        try:
+            self.assertEqual('Z Z Z', emu.getEditedText())
+        except IndexError:
+            pass
+        except Exception as e:
+            self.fail(f"Unexpected exception raised: {e}")
+        else:
+            self.fail("Expected IndexError, but no exception was raised")
+
+        await emu.pressButton('bob', 'reset-costs', msg_id=8)
+        self.assertEqual('Траты сброшены💨', emu.getEditedText())
+
+        await emu.sendMessage('eve', '/report')
+        self.assertEqual('⚠️ Нет записанных трат', emu.getRepliedText())
+
 
 if __name__ == "__main__":
     unittest.main()
