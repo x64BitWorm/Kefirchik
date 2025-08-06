@@ -36,7 +36,30 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
 
         await emu.sendMessage('alice', '/report')
         self.assertEqual('eve ➡️ alice 150🎪\nbob ➡️ alice 50🎪\n', emu.getRepliedText())
-    
+
+        await emu.sendMessage('bob', '/add 500\n@alice 30\n@eve @bob')
+        self.assertEqual('Запомнил🍶 ждем  @eve @bob', emu.getRepliedText())
+
+        try: await emu.sendMessage('eve', 'borga??', reply_id=7)
+        except Exception: pass
+        else: self.fail('Expected exception not raised')
+
+        await emu.sendMessage('eve', '200', reply_id=7)
+        self.assertEqual(constants.ReactionEmoji.THUMBS_UP, emu.getReaction())    
+        self.assertEqual('@bob должен 270?', emu.getRepliedText()) # игнорим
+
+        await emu.sendMessage('alice', '...+150', reply_id=7)
+        self.assertEqual(constants.ReactionEmoji.THUMBS_UP, emu.getReaction())    
+        self.assertEqual('@bob должен 120?', emu.getRepliedText()) # игнорим
+
+        await emu.sendMessage('bob', 'da eto borga', reply_id=7)
+        self.assertEqual(constants.ReactionEmoji.WRITING_HAND, emu.getReaction())
+
+        await emu.sendMessage('bob', 'x', reply_id=7)
+        self.assertEqual(constants.ReactionEmoji.FIRE, emu.getReaction())
+
+        await emu.sendMessage('eve', '/report')
+        self.assertEqual('eve ➡️ bob 330🎪\neve ➡️ alice 20🎪\n', emu.getRepliedText())
 
     async def test_cancel_spending(self):
         emu = ChatEmu()

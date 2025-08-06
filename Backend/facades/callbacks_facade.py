@@ -64,7 +64,7 @@ class CallbacksFacade:
         if buttonData.endswith('/yes'):
             spending.debtors[fromUser] = str(metaInfo.remainingAmount)
             spending.debtors = spendings_handler.getDebtorsWithAmounts(spending.debtors, spending.costAmount)
-            self.db.updateCost(group_id, message.getReplyMessageId(), True, json.dumps(spending.debtors))
+            self.db.updateCost(group_id, message.getReplyMessageId(), True, spending.debtors, spending.desc)
             await message.set_reaction(constants.ReactionEmoji.FIRE)
             await message.edit_text(textLastDebtorApprove(fromUser, metaInfo.remainingAmount))
         elif buttonData.endswith('/no'):
