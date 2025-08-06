@@ -32,19 +32,32 @@ class HandlersFacade:
         if spending is None:
             return
         
-        expression = spendings_handler.getExpressionOfReply(message.getText(), message.getUsername(), spending)
-        spending.debtors[message.getUsername()] = expression
-        spendingCompleted = spendings_handler.isSpendingCompleted(spending.debtors)
-        if spendingCompleted:
-            spending.debtors = spendings_handler.getDebtorsWithAmounts(spending.debtors, spending.costAmount) # resolve x's
-        self.db.updateCost(group_id, message.getReplyMessageId(), spendingCompleted, json.dumps(spending.debtors))
-        await message.set_reaction(constants.ReactionEmoji.FIRE if spendingCompleted else constants.ReactionEmoji.THUMBS_UP)
+        comment = spending.desc
+        # папик хочет обновить коммент?
+        if spending.telegramFromId == message.getUsername():
+            try:
+                spendings_handler.getExpressionOfReply(message.getText(), message.getUsername(), spending)
+            except Exception:
+                comment = message.getText()
+        # это дополнение траты
+        if comment == spending.desc:
+            expression = spendings_handler.getExpressionOfReply(message.getText(), message.getUsername(), spending)
+            spending.debtors[message.getUsername()] = expression
+            spendingCompleted = spendings_handler.isSpendingCompleted(spending.debtors)
+            if spendingCompleted:
+                spending.debtors = spendings_handler.getDebtorsWithAmounts(spending.debtors, spending.costAmount) # resolve x's
+            self.db.updateCost(group_id, message.getReplyMessageId(), spendingCompleted, spending.debtors, comment)
+            await message.set_reaction(constants.ReactionEmoji.FIRE if spendingCompleted else constants.ReactionEmoji.THUMBS_UP)
+            metaInfo = spendings_handler.getSpendingMetaInfo(spending)
+            if not spendingCompleted and len(metaInfo.notFilledUsers) == 1 and metaInfo.type == SpendingType.SIMPLE:
+                replyMessage = message.getReplyMessage()
+                replyMessageText = textLastDebtorQuestion(metaInfo.notFilledUsers[0], metaInfo.remainingAmount)
+                await replyMessage.reply_text(replyMessageText, reply_markup=getLastDebtorApproveMarkup())
+        # это обновление коммента
+        else:
+            self.db.updateCost(group_id, message.getReplyMessageId(), spending.isCompleted, spending.debtors, comment)
+            await message.set_reaction(constants.ReactionEmoji.WRITING_HAND)
 
-        metaInfo = spendings_handler.getSpendingMetaInfo(spending)
-        if not spendingCompleted and len(metaInfo.notFilledUsers) == 1 and metaInfo.type == SpendingType.SIMPLE:
-            replyMessage = message.getReplyMessage()
-            replyMessageText = textLastDebtorQuestion(metaInfo.notFilledUsers[0], metaInfo.remainingAmount)
-            await replyMessage.reply_text(replyMessageText, reply_markup=getLastDebtorApproveMarkup())
     
     async def report_command(self, message: IMessage) -> None:
         group = self.db.getGroup(message.getChatId())
