@@ -1,14 +1,9 @@
-import json
-from services.constants import textLastDebtorQuestion
 from models.dto.spendings_dto import SpendingType
-from handlers import reports_handler
-from services.telegram_markups import getCancelMarkup, getCsvReportMarkup, getLastDebtorApproveMarkup, getResetMarkup
-import services.parsers as parsers
-from handlers.help_handler import *
-import handlers.spendings_handler as spendings_handler
-import handlers.help_handler as help_handler
 from models.bot_api.bot_api_interfaces import IMessage
-from telegram import constants, InlineKeyboardButton, InlineKeyboardMarkup
+from services.constants import textLastDebtorQuestion
+from services.telegram_markups import getCancelMarkup, getCsvReportMarkup, getLastDebtorApproveMarkup, getResetMarkup
+from handlers import reports_handler, parsers_handler, spendings_handler, help_handler
+from telegram import constants
 from database import IDatabase
 
 class HandlersFacade:
@@ -19,7 +14,7 @@ class HandlersFacade:
         await message.reply_text(help_handler.getHelpText())
 
     async def add_command(self, message: IMessage) -> None:
-        data = parsers.ParsedQuery(message.getText(), message.getUsername())
+        data = parsers_handler.ParsedQuery(message.getText(), message.getUsername())
         reply_text = spendings_handler.getReplyText(data)
         spendingCompleted = spendings_handler.isSpendingCompleted(data.debtors)
         debtors = spendings_handler.getDebtorsWithAmounts(data.debtors, data.amount) if spendingCompleted else data.debtors
@@ -32,33 +27,51 @@ class HandlersFacade:
         if spending is None:
             return
         
-        comment = spending.desc
-        # папик хочет обновить коммент?
+        isDirectCompletion = True
+        # папик хочет обновить коммент или дозаполнить трату за должников?
         if spending.telegramFromId == message.getUsername():
             try:
                 spendings_handler.getExpressionOfReply(message.getText(), message.getUsername(), spending)
             except Exception:
-                comment = message.getText()
-        # это дополнение траты
-        if comment == spending.desc:
+                isDirectCompletion = False
+        # это прямое дополнение траты
+        if isDirectCompletion:
+            if spendings_handler.isSpendingCompleted(spending.debtors):
+                await message.set_reaction(constants.ReactionEmoji.SEE_NO_EVIL_MONKEY)
+                return
             expression = spendings_handler.getExpressionOfReply(message.getText(), message.getUsername(), spending)
             spending.debtors[message.getUsername()] = expression
             spendingCompleted = spendings_handler.isSpendingCompleted(spending.debtors)
             if spendingCompleted:
                 spending.debtors = spendings_handler.getDebtorsWithAmounts(spending.debtors, spending.costAmount) # resolve x's
-            self.db.updateCost(group_id, message.getReplyMessageId(), spendingCompleted, spending.debtors, comment)
+            self.db.updateCost(group_id, message.getReplyMessageId(), spendingCompleted, spending.debtors, spending.desc)
             await message.set_reaction(constants.ReactionEmoji.FIRE if spendingCompleted else constants.ReactionEmoji.THUMBS_UP)
             metaInfo = spendings_handler.getSpendingMetaInfo(spending)
             if not spendingCompleted and len(metaInfo.notFilledUsers) == 1 and metaInfo.type == SpendingType.SIMPLE:
                 replyMessage = message.getReplyMessage()
                 replyMessageText = textLastDebtorQuestion(metaInfo.notFilledUsers[0], metaInfo.remainingAmount)
                 await replyMessage.reply_text(replyMessageText, reply_markup=getLastDebtorApproveMarkup())
-        # это обновление коммента
+        # это обновление коммента либо дозаполнение траты папиком
         else:
-            self.db.updateCost(group_id, message.getReplyMessageId(), spending.isCompleted, spending.debtors, comment)
-            await message.set_reaction(constants.ReactionEmoji.WRITING_HAND)
+            parsedRefilling = parsers_handler.parseSpendingBody(spending.telegramFromId, message.getText())
+            for debtor, debt in parsedRefilling.debtors.items():
+                if debtor in spendings_handler.getUnfilledUsers(spending.debtors):
+                    spending.debtors[debtor] = debt
+            spendingCompleted = spendings_handler.isSpendingCompleted(spending.debtors)
+            if spendingCompleted:
+                spending.debtors = spendings_handler.getDebtorsWithAmounts(spending.debtors, spending.costAmount) # resolve x's
+            self.db.updateCost(group_id, message.getReplyMessageId(), spendingCompleted, spending.debtors, parsedRefilling.comment)
+            if parsedRefilling.debtors:
+                await message.set_reaction(constants.ReactionEmoji.FIRE if spendingCompleted else constants.ReactionEmoji.THUMBS_UP)
+            else:
+                await message.set_reaction(constants.ReactionEmoji.WRITING_HAND)
+            metaInfo = spendings_handler.getSpendingMetaInfo(spending)
+            if not spendingCompleted and len(metaInfo.notFilledUsers) == 1 and metaInfo.type == SpendingType.SIMPLE:
+                replyMessage = message.getReplyMessage()
+                replyMessageText = textLastDebtorQuestion(metaInfo.notFilledUsers[0], metaInfo.remainingAmount)
+                await replyMessage.reply_text(replyMessageText, reply_markup=getLastDebtorApproveMarkup())
 
-    
+
     async def report_command(self, message: IMessage) -> None:
         group = self.db.getGroup(message.getChatId())
         spendings = self.db.getSpendings(group.id)
