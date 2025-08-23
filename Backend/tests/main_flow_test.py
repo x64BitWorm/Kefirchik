@@ -80,6 +80,16 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
         await emu.sendMessage('alice', '/add 100\n@eve @bob\nkefir')
         self.assertEqual('Запомнил🍶 ждем  @eve @bob', emu.getRepliedText())
         
+        await emu.sendMessage('bob', '/report')
+        replied_text = emu.getRepliedText()
+        self.assertTrue(any(
+            expected == replied_text
+            for expected in [
+                '❗️ Есть незакрытая трата у @alice @eve\n\n⚠️ Нет записанных трат',
+                '❗️ Есть незакрытая трата у @eve @bob\n\n⚠️ Нет записанных трат'
+            ]
+        ))
+
         await emu.sendMessage('eve', '/add 50\n@bob x\ncofe')
         self.assertEqual('Запомнил🍶', emu.getRepliedText())
 

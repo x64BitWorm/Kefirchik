@@ -50,17 +50,18 @@ class HandlersFacade:
         group = self.db.getGroup(message.getChatId())
         spendings = self.db.getSpendings(group.id)
 
+        uncompletedSpending = reports_handler.getUncompletedSpending(spendings)
+        warningUncompleted = ''
+        reply_to_message_id = None
+        if uncompletedSpending != None:
+            warningUncompleted = reports_handler.getUncompletedWarningText(uncompletedSpending)
+            reply_to_message_id = uncompletedSpending.messageId
+
         report = reports_handler.getReportInfo(spendings)
         if report.transactions_count > 0:
-            uncompletedSpending = reports_handler.getUncompletedSpending(spendings)
-            warningUncompleted = ''
-            reply_to_message_id = None
-            if uncompletedSpending != None:
-                warningUncompleted = reports_handler.getUncompletedWarningText(uncompletedSpending)
-                reply_to_message_id = uncompletedSpending.messageId
             await message.reply_text(warningUncompleted + report.text, reply_markup=getCsvReportMarkup(), reply_to_message_id=reply_to_message_id)
         else:
-            await message.reply_text(report.text)
+            await message.reply_text(warningUncompleted + report.text, reply_to_message_id=reply_to_message_id)
 
     async def reset_command(self, message: IMessage) -> None:
         group_id = self.db.getGroup(message.getChatId()).id
