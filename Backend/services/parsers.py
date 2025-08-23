@@ -6,8 +6,8 @@ class ParsedQuery:
         self.debtors = {}
         self.comment = ""
         self.command = ""
-        first_line_pattern = r'^/(?P<command>\w+)(?:@\w+)?\s+(?P<amount_expr>\S+)\s*$'
-        debter_pattern = r'^(?P<users>(?: *@\w+)+) *(?P<expr>\S*) *$'
+        first_line_pattern = r'^/(?P<command>\w+)(?:@\w+)?\s+(?P<amount_expr>.+)\s*$'
+        debter_pattern = r'^(?P<users>(?: *@\w+)+) *(?P<expr>.*)? *$'
         
         lines = text.splitlines()
         if not lines:
