@@ -15,7 +15,10 @@ class TgMessage(IMessage):
 
     def getText(self) -> str:
         return self.msgObj.message.text
-    
+
+    def getCaption(self) -> str:
+        return self.msgObj.message.caption
+
     def getReplyMessageId(self) -> int:
         return self.msgObj.message.reply_to_message.id
     

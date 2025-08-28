@@ -1,3 +1,4 @@
+from facades.images_facade import ImagesFacade
 from facades.callbacks_facade import CallbacksFacade
 from config import Config
 from database import IDatabase
@@ -8,7 +9,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 from utils import BotException, BotWrongInputException
 
 def wrap(func):
-    async def wrap_internal(update, context):
+    async def wrap_internal(update: Update, context):
         message = TgMessage(update)
         try:
             await func(message)
@@ -26,6 +27,7 @@ class TgWrapper:
         self.db = db
         self.handlerFacade = HandlersFacade(db)
         self.callbackFacade = CallbacksFacade(db)
+        self.imagesFacade = ImagesFacade(db)
 
     def startup(self):
         application = Application.builder().token(self.config.TOKEN).build()
@@ -34,6 +36,7 @@ class TgWrapper:
         application.add_handler(CommandHandler("report", wrap(self.handlerFacade.report_command)))
         application.add_handler(CommandHandler("reset", wrap(self.handlerFacade.reset_command)))
         application.add_handler(MessageHandler(filters.REPLY, wrap(self.handlerFacade.reply_command)))
+        application.add_handler(MessageHandler(filters.PHOTO, wrap(self.imagesFacade.process_image)))
         application.add_handler(CallbackQueryHandler(wrap(self.callbackFacade.report_csv_callback), pattern='report-csv'))
         application.add_handler(CallbackQueryHandler(wrap(self.callbackFacade.cancel_callback), pattern='cancel-send'))
         application.add_handler(CallbackQueryHandler(wrap(self.callbackFacade.reset_callback), pattern='reset-costs'))
