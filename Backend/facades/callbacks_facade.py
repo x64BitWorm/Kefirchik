@@ -37,15 +37,17 @@ class CallbacksFacade:
         fromUser = query.getUsername()
         chatId = message.getChatId()
         messageText = message.getText()
-        users = messageText.split(",")
+        users = [u[1:] for u in messageText.split() if u.startswith("@")]
         await query.answer()
+        if fromUser not in users:
+            return
         users.remove(fromUser)
-        if not users:
+        if users:
+            users = "@" + " @".join(users)
+            await message.edit_text(users, reply_markup=getResetMarkup())
+        else:
             self.db.removeCosts(chatId)
             await message.edit_text("Траты сброшены💨")
-            return
-        users = ",".join(users)
-        await message.edit_text(users, reply_markup=getResetMarkup())
 
     async def last_debtor_approve_callback(self, message: IMessage) -> None:
         query = message.getCallbackQuery()

@@ -47,5 +47,6 @@ def getExpressionOfReply(text: str, user: str, spending: Spending) -> str:
         raise BotWrongInputException()
     return expression
 
-def getUsersFromSpendings(spendings: list[Spending]):
-    return ",".join(set(map(lambda x: x.telegramFromId, spendings)))
+def getUsersFromSpendings(spendings: list[Spending]) -> str:
+    users = {spending.telegramFromId for spending in spendings}
+    return "@" + " @".join(sorted(users)) if users else ""
