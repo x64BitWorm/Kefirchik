@@ -13,7 +13,7 @@ class IDatabase:
         pass
     def insertCost(self, messageId, groupId, isCompleted, telegramFromId, costAmount, debtors, desc):
         pass
-    def updateCost(self, groupId, messageId, isCompleted, debtors):
+    def updateCost(self, groupId, messageId, isCompleted, debtors, desc):
         pass
     def getCost(self, groupId, messageId) -> Spending:
         pass
@@ -77,10 +77,10 @@ class Database(IDatabase):
         finally:
             cursor.close()
 
-    def updateCost(self, groupId, messageId, isCompleted, debtors):
+    def updateCost(self, groupId, messageId, isCompleted, debtors, desc):
         try:
             cursor = self.sqlite_connection.cursor()
-            cursor.execute(f'update costs set isCompleted = {isCompleted}, debtors = \'{debtors}\' where groupId = {groupId} and messageId = {messageId};')
+            cursor.execute(f'update costs set isCompleted = {isCompleted}, debtors = \'{json.dumps(debtors)}\', desc = \'{desc}\' where groupId = {groupId} and messageId = {messageId};')
             self.sqlite_connection.commit()
         finally:
             cursor.close()
