@@ -230,7 +230,7 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
 
         await emu.pressButton('alice', 'last-debtor-approve/yes', msg_id=4) # Press button on 4 message in chat
         self.assertEqual(constants.ReactionEmoji.FIRE, emu.getReaction())
-        self.assertEqual('@alice определил остаток @bob в 300', emu.getEditedText())
+        self.assertEqual('@alice определил долю @bob в 300', emu.getEditedText())
 
         await emu.sendMessage('alice', '/report')
         self.assertEqual('bob ➡️ alice 300🎪\neve ➡️ alice 200🎪\n', emu.getRepliedText())
@@ -244,7 +244,7 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
 
         await emu.pressButton('alice', 'last-debtor-approve/yes', msg_id=10) # Press button on 4 message in chat
         self.assertEqual(constants.ReactionEmoji.FIRE, emu.getReaction())
-        self.assertEqual('@alice определил остаток @alex в -20', emu.getEditedText())        
+        self.assertEqual('@alice определил долю @alex в -20', emu.getEditedText())        
 
     async def test_approve_negative_debt(self):
         emu = ChatEmu()
