@@ -2,20 +2,20 @@ from models.dto.spendings_dto import SpendingMetaInfo
 from utils import BotException, BotWrongInputException
 from models.db.spending import Spending
 import services.calculations as calculations
-from services.parsers import ParsedQuery
+from handlers import parsers_handler
 
 def isSpendingCompleted(debtors: any):
     notFilledUsers = getUnfilledUsers(debtors)
     return len(notFilledUsers) == 0
 
-def getReplyText(data: ParsedQuery):
+def getReplyText(data: parsers_handler.ParsedQuery):
     notFilledUsers = getUnfilledUsers(data.debtors)
     text = 'Запомнил🍶'
     if len(notFilledUsers) > 0:
         text += f' ждем {" @".join([""] + notFilledUsers)}'
     return text
 
-def getUnfilledUsers(debtors):
+def getUnfilledUsers(debtors: dict[str, str]) -> list[str]:
     names = []
     for k, v in debtors.items():
         if not v:
@@ -47,5 +47,6 @@ def getExpressionOfReply(text: str, user: str, spending: Spending) -> str:
         raise BotWrongInputException()
     return expression
 
-def getUsersFromSpendings(spendings: list[Spending]):
-    return ",".join(set(map(lambda x: x.telegramFromId, spendings)))
+def getUsersFromSpendings(spendings: list[Spending]) -> str:
+    users = {spending.telegramFromId for spending in spendings}
+    return "@" + " @".join(sorted(users)) if users else ""

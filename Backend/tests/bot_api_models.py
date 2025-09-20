@@ -44,6 +44,7 @@ class TestMessage(IMessage):
     
     async def edit_text(self, message: str, reply_markup = None):
         self.ctx.msgQueue.append(QueueMsgType('edit_text', [message, self.message_id]))
+        self.ctx.messages[self.message_id].text = message
     
     async def set_reaction(self, reaction: str):
         self.ctx.msgQueue.append(QueueMsgType('set_reaction', [reaction]))

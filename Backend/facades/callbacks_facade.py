@@ -1,5 +1,5 @@
 import json
-from services.constants import textLastDebtorApprove
+from services.constants import textLastDebtorApprove, textLastDebtorPapikApprove
 from models.dto.spendings_dto import SpendingType
 from services.telegram_markups import getResetMarkup
 from handlers import reports_handler, spendings_handler
@@ -37,15 +37,17 @@ class CallbacksFacade:
         fromUser = query.getUsername()
         chatId = message.getChatId()
         messageText = message.getText()
-        users = messageText.split(",")
+        users = [u[1:] for u in messageText.split() if u.startswith("@")]
         await query.answer()
+        if fromUser not in users:
+            return
         users.remove(fromUser)
-        if not users:
+        if users:
+            users = "@" + " @".join(users)
+            await message.edit_text(users, reply_markup=getResetMarkup())
+        else:
             self.db.removeCosts(chatId)
             await message.edit_text("Траты сброшены💨")
-            return
-        users = ",".join(users)
-        await message.edit_text(users, reply_markup=getResetMarkup())
 
     async def last_debtor_approve_callback(self, message: IMessage) -> None:
         query = message.getCallbackQuery()
@@ -55,15 +57,18 @@ class CallbacksFacade:
         metaInfo = spendings_handler.getSpendingMetaInfo(spending)
         await query.answer()
         fromUser = query.getUsername()
-        if metaInfo.notFilledUsers != [fromUser] or metaInfo.type != SpendingType.SIMPLE:
+        if metaInfo.notFilledUsers != [fromUser] and fromUser != spending.telegramFromId or metaInfo.type != SpendingType.SIMPLE:
             return
         group_id = self.db.getGroup(chatId).id
         buttonData = query.getData()
         if buttonData.endswith('/yes'):
-            spending.debtors[fromUser] = str(metaInfo.remainingAmount)
+            spending.debtors[metaInfo.notFilledUsers[0]] = str(metaInfo.remainingAmount)
             spending.debtors = spendings_handler.getDebtorsWithAmounts(spending.debtors, spending.costAmount)
-            self.db.updateCost(group_id, message.getReplyMessageId(), True, json.dumps(spending.debtors))
+            self.db.updateCost(group_id, message.getReplyMessageId(), True, spending.debtors, spending.desc)
             await message.set_reaction(constants.ReactionEmoji.FIRE)
-            await message.edit_text(textLastDebtorApprove(fromUser, metaInfo.remainingAmount))
+            if fromUser == metaInfo.notFilledUsers[0]:
+                await message.edit_text(textLastDebtorApprove(fromUser, metaInfo.remainingAmount))
+            else:
+                await message.edit_text(textLastDebtorPapikApprove(fromUser, metaInfo.notFilledUsers[0], metaInfo.remainingAmount))
         elif buttonData.endswith('/no'):
             await message.delete()
