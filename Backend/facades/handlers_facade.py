@@ -19,7 +19,8 @@ class HandlersFacade:
         await message.reply_text(help_handler.getHelpText())
 
     async def add_command(self, message: IMessage) -> None:
-        data = parsers.ParsedQuery(message.getText(), message.getUsername())
+        text = message.getCaption() if message.isPhoto() else message.getText()
+        data = parsers.ParsedQuery(text, message.getUsername())
         reply_text = spendings_handler.getReplyText(data)
         spendingCompleted = spendings_handler.isSpendingCompleted(data.debtors)
         debtors = spendings_handler.getDebtorsWithAmounts(data.debtors, data.amount) if spendingCompleted else data.debtors

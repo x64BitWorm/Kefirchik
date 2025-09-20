@@ -1,4 +1,3 @@
-from facades.images_facade import ImagesFacade
 from facades.callbacks_facade import CallbacksFacade
 from config import Config
 from database import IDatabase
@@ -14,7 +13,6 @@ class TgWrapper:
         self.db = db
         self.handlerFacade = HandlersFacade(db)
         self.callbackFacade = CallbacksFacade(db)
-        self.imagesFacade = ImagesFacade(db)
 
     def startup(self):
         application = Application.builder().token(self.config.TOKEN).build()
@@ -23,7 +21,7 @@ class TgWrapper:
         application.add_handler(CommandHandler("report", self.wrap(self.handlerFacade.report_command)))
         application.add_handler(CommandHandler("reset", self.wrap(self.handlerFacade.reset_command)))
         application.add_handler(MessageHandler(filters.REPLY, self.wrap(self.handlerFacade.reply_command)))
-        application.add_handler(MessageHandler(filters.PHOTO | filters.Command, self.wrap(self.imagesFacade.process_image)))
+        application.add_handler(MessageHandler(filters.PHOTO & filters.CaptionRegex('^/add'), self.wrap(self.handlerFacade.add_command)))
         application.add_handler(CallbackQueryHandler(self.wrap(self.callbackFacade.report_csv_callback), pattern='report-csv'))
         application.add_handler(CallbackQueryHandler(self.wrap(self.callbackFacade.cancel_callback), pattern='cancel-send'))
         application.add_handler(CallbackQueryHandler(self.wrap(self.callbackFacade.reset_callback), pattern='reset-costs'))
