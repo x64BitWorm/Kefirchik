@@ -13,6 +13,13 @@ class IMessage:
     def getText(self) -> str:
         pass
 
+    # Used for images
+    def getCaption(self) -> str:
+        pass
+
+    def isPhoto(self) -> bool:
+        pass
+
     def getReplyMessageId(self) -> int:
         pass
 
