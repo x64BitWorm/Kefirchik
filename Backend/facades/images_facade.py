@@ -10,6 +10,8 @@ class ImagesFacade:
         self.db = db
     
     async def process_image(self, message: IMessage) -> None:
+        if not message.getCaption().startswith("/add"):
+            return
         data = parsers.ParsedQuery(message.getCaption(), message.getUsername())
         reply_text = spendings_handler.getReplyText(data)
         spendingCompleted = spendings_handler.isSpendingCompleted(data.debtors)
