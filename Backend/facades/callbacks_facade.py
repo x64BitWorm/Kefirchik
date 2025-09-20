@@ -32,7 +32,6 @@ class CallbacksFacade:
         await query.answer()
 
     async def reset_callback(self, message: IMessage) -> None:
-        print('async def reset_callback(self, message: IMessage) -> None:')
         query = message.getCallbackQuery()
         message = query.getMessage()
         fromUser = query.getUsername()
