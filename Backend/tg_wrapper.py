@@ -1,6 +1,6 @@
 from facades.callbacks_facade import CallbacksFacade
 from config import Config
-from database import IDatabase
+from database import DbManager
 from models.bot_api.bot_api_tg import TgMessage
 from facades.handlers_facade import HandlersFacade
 from telegram import Update, constants
@@ -8,11 +8,11 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 from utils import BotException, BotWrongInputException
 
 class TgWrapper:
-    def __init__(self, config: Config, db: IDatabase):
+    def __init__(self, config: Config, db: DbManager):
         self.config = config
         self.db = db
-        self.handlerFacade = HandlersFacade(db)
-        self.callbackFacade = CallbacksFacade(db)
+        self.handlerFacade = HandlersFacade()
+        self.callbackFacade = CallbacksFacade()
 
     def startup(self):
         application = Application.builder().token(self.config.TOKEN).build()
@@ -42,8 +42,9 @@ class TgWrapper:
     def wrap(self, func):
         async def wrap_internal(update: Update, context):
             message = TgMessage(update)
+            session = self.db.newSession()
             try:
-                await func(message)
+                await func(message, session)
             except BotException as e:
                 await message.reply_text(str(e))
             except BotWrongInputException as e:
@@ -52,4 +53,6 @@ class TgWrapper:
                 await message.set_reaction(constants.ReactionEmoji.CRYING_FACE)
                 if not self.config.USE_WEB_HOOKS:
                     raise e
+            finally:
+                session.close()
         return wrap_internal

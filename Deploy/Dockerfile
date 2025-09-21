@@ -4,7 +4,6 @@ WORKDIR /Application
 
 COPY Backend ./
 
-RUN pip install python-telegram-bot --upgrade
-RUN pip install "python-telegram-bot[webhooks]"
+RUN pip install python-telegram-bot "python-telegram-bot[webhooks]" SQLAlchemy --upgrade
 
 ENTRYPOINT ["python", "main.py"]
