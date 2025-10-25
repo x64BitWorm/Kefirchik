@@ -1,6 +1,7 @@
 import json
 import os
 from datetime import datetime
+import pathlib
 from typing import Any
 import sqlalchemy as sa
 from sqlalchemy import func, text
@@ -125,14 +126,15 @@ class DbManager:
             from_id = dbs.u.query(func.max(Migration.id)).scalar()
             if from_id == None:
                 from_id = -1
-            migration_files = sorted([f for f in os.listdir('migrations')])
+            migrations_path = os.path.join(pathlib.Path(__file__).parent.resolve(), 'migrations')
+            migration_files = sorted([f for f in os.listdir(migrations_path)])
             for file in migration_files:
                 idx, name, *rest = file.split('_', maxsplit=1)
                 idx = int(idx)
                 name = name.removesuffix('.sql')
                 if idx <= from_id:
                     continue
-                with open(os.path.join('migrations', file), 'r') as file_ptr:
+                with open(os.path.join(migrations_path, file), 'r') as file_ptr:
                     content = file_ptr.read()
                     print('applying migration - ', file)
                     connection = self.main_engine.raw_connection()
