@@ -5,6 +5,7 @@ import io
 import random
 from collections import defaultdict
 
+from utils import timestamp_to_datestr
 from services.formatters import formatMoney
 from handlers import spendings_handler
 from models.dto.report_dto import ReportInfoDto, ReportOverviewDto, ReportTransactionDto
@@ -97,7 +98,7 @@ def generateCsv(spendings: list[Spending]) -> io.StringIO:
             spending.telegramFromId,
             formatMoney(spending.costAmount),
             *debt_shares,
-            spending.date
+            timestamp_to_datestr(spending.date)
         ])
 
     csv_content = output.getvalue()
