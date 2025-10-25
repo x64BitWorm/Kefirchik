@@ -1,4 +1,5 @@
 from datetime import datetime
+import pytz
 
 class BotException(Exception):
     def __init__(self, *args):
@@ -14,3 +15,6 @@ class BotWrongInputException(Exception):
 
 def iso_date():
     return datetime.now().replace(microsecond=0).isoformat()
+
+def timestamp_to_datestr(timestamp: int) -> str:
+    return datetime.fromtimestamp(timestamp, pytz.timezone('Europe/Moscow')).strftime('%d.%m.%Y %H:%M')
