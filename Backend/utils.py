@@ -1,5 +1,5 @@
 from datetime import datetime
-import pytz
+from zoneinfo import ZoneInfo
 
 class BotException(Exception):
     def __init__(self, *args):
@@ -17,4 +17,4 @@ def iso_date():
     return datetime.now().replace(microsecond=0).isoformat()
 
 def timestamp_to_datestr(timestamp: int) -> str:
-    return datetime.fromtimestamp(timestamp, pytz.timezone('Europe/Moscow')).strftime('%d.%m.%Y %H:%M')
+    return datetime.fromtimestamp(timestamp, ZoneInfo('Europe/Moscow')).strftime('%d.%m.%Y %H:%M')
