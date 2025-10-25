@@ -1,117 +1,157 @@
-import sqlite3
-from datetime import datetime
 import json
+import os
+from datetime import datetime
+import pathlib
+from typing import Any
+import sqlalchemy as sa
+from sqlalchemy import func, text
+from sqlalchemy.orm import sessionmaker, Session
 
+import utils
+from models.db.migration import Migration
+from models.db.base import Base
 from models.db.group import Group
 from models.db.spending import Spending
 
-class IDatabase:
-    def getGroup(self, id) -> Group:
-        """TODO"""
+class IDbSession:
+    def __init__(self, session: Session):
+        self.u = session
+    def close(self):
+        """Close session after all operations"""
         pass
-    def getSpendings(self, groupId) -> list[Spending]:
+    def commit(self):
+        """Apply all changes as transaction"""
         pass
-    def insertCost(self, messageId, groupId, isCompleted, telegramFromId, costAmount, debtors, desc):
+    def rollback(self):
+        """Cancel transaction"""
         pass
-    def updateCost(self, groupId, messageId, isCompleted, debtors, desc):
+    def getGroup(self, id: int) -> Group:
+        """Find group by id"""
         pass
-    def getCost(self, groupId, messageId) -> Spending:
+    def getSpendings(self, groupId: int) -> list[Spending]:
+        """Find all spendings related to group"""
         pass
-    def removeCosts(self, groupId):
+    def insertSpending(self, messageId: int, groupId: int, isCompleted: bool, telegramFromId: str, costAmount: float, debtors, desc: str):
+        """Attach new spending to group"""
         pass
-    def removeCost(self, groupId, messageId):
+    def updateSpending(self, groupId: int, messageId: int, isCompleted: bool, debtors: Any, desc: str):
+        """Update spending data"""
+        pass
+    def getSpending(self, groupId: int, messageId: int) -> Spending:
+        """Find spending by composite key"""
+        pass
+    def removeSpendings(self, groupId: int):
+        """Delete all group spendings"""
+        pass
+    def removeSpending(self, groupId: int, messageId: int):
+        """Delete specific spending"""
         pass
 
-class Database(IDatabase):
-    def __init__(self, path: str = None):
-        self.sqlite_connection = sqlite3.connect(':memory:' if path == None else path)
-        cursor = self.sqlite_connection.cursor()
-        sqlite_select_query = "select sqlite_version();"
-        cursor.execute(sqlite_select_query)
-        record = cursor.fetchall()
-        # record - SQLite version
-        cursor.execute("CREATE TABLE IF NOT EXISTS groups (id NUMERIC (8) PRIMARY KEY NOT NULL UNIQUE, lastReport BLOB, startReset INTEGER);")
-        cursor.execute("CREATE TABLE IF NOT EXISTS costs (messageId NUMERIC (8) PRIMARY KEY UNIQUE NOT NULL, groupId INTEGER REFERENCES groups (id) NOT NULL, isCompleted INTEGER (1) NOT NULL, telegramFromId TEXT NOT NULL, costAmount REAL (8) NOT NULL, Debtors TEXT NOT NULL, Desc TEXT NOT NULL, date INTEGER(4) NOT NULL);")
-        cursor.close()
+class DbSession(IDbSession):
+    def __init__(self, session: Session):
+        super().__init__(session)
     
-    def getGroup(self, id) -> Group:
-        try:
-            cursor = self.sqlite_connection.cursor()
-            cursor.execute(f'select * from groups where id = {id};')
-            record = cursor.fetchall()
-            if (len(record) == 0):
-                cursor.execute(f'insert into groups (id, lastReport, startReset) values ({id}, \'\', 0);')
-                self.sqlite_connection.commit()
-                cursor.execute(f'select * from groups where id = {id};')
-                record = cursor.fetchall()
-            record = record[0]
-            result = { 'id': record[0], 'lastReport': record[1], 'startReset': record[2] }
-            return Group(result)
-        finally:
-            cursor.close()
+    def close(self):
+        self.u.close()
+    
+    def commit(self):
+        self.u.commit()
+    
+    def rollback(self):
+        self.u.rollback()
+    
+    def getGroup(self, id: int) -> Group:
+        group = self.u.query(Group).filter(
+            Group.id == id,
+        ).first()
+        if group == None:
+            group = Group(id=id, lastReport='', startReset=0)
+            self.u.add(group)
+            self.u.commit()
+        return group
 
-    def getSpendings(self, groupId) -> list[Spending]:
-        try:
-            cursor = self.sqlite_connection.cursor()
-            cursor.execute(f'select * from costs where groupId = {groupId};')
-            records = cursor.fetchall()
-            return list(map(lambda record: Spending({
-                'messageId': record[0],
-                'groupId': record[1],
-                'isCompleted': record[2],
-                'telegramFromId': record[3],
-                'costAmount': record[4],
-                'debtors': record[5],
-                'desc': record[6],
-                'date': datetime.fromtimestamp(record[7])
-                }), records))
-        finally:
-            cursor.close()
+    def getSpendings(self, groupId: int) -> list[Spending]:
+        return self.u.query(Spending).filter(
+            Spending.groupId == groupId
+        ).all()
 
-    def insertCost(self, messageId, groupId, isCompleted, telegramFromId, costAmount, debtors, desc):
-        try:
-            cursor = self.sqlite_connection.cursor()
-            now = int(datetime.now().timestamp())
-            cursor.execute(f'insert into costs (messageId, groupId, isCompleted, telegramFromId, costAmount, debtors, desc, date) values ({messageId}, {groupId}, {isCompleted}, \'{telegramFromId}\', {costAmount}, \'{json.dumps(debtors)}\', \'{desc}\', {now});')
-            self.sqlite_connection.commit()
-        finally:
-            cursor.close()
+    def insertSpending(self, messageId: int, groupId: int, isCompleted: bool, telegramFromId: str, costAmount: float, debtors, desc: str):
+        now = int(datetime.now().timestamp())
+        self.u.add(Spending(
+            messageId = messageId,
+            groupId = groupId,
+            isCompleted = isCompleted,
+            telegramFromId = telegramFromId,
+            costAmount = costAmount,
+            debtors = debtors,
+            desc = desc,
+            date = now
+        ))
 
-    def updateCost(self, groupId, messageId, isCompleted, debtors, desc):
-        try:
-            cursor = self.sqlite_connection.cursor()
-            cursor.execute(f'update costs set isCompleted = {isCompleted}, debtors = \'{json.dumps(debtors)}\', desc = \'{desc}\' where groupId = {groupId} and messageId = {messageId};')
-            self.sqlite_connection.commit()
-        finally:
-            cursor.close()
+    def updateSpending(self, groupId: int, messageId: int, isCompleted: bool, debtors: Any, desc: str):
+        self.u.query(Spending).filter(
+            (Spending.groupId == groupId) & (Spending.messageId == messageId)
+            ).update({
+                'isCompleted': isCompleted,
+                'debtors': json.dumps(debtors),
+                'desc': desc
+            })
 
-    def getCost(self, groupId, messageId) -> Spending:
-        try:
-            cursor = self.sqlite_connection.cursor()
-            cursor.execute(f'select * from costs where groupId = {groupId} and messageId = {messageId};')
-            record = cursor.fetchall()
-            record = record[0]
-            result = { 'messageId': record[0], 'groupId': record[1], 'isCompleted': record[2], 'telegramFromId': record[3], 'costAmount': record[4], 'debtors': record[5], 'desc': record[6], 'date': datetime.fromtimestamp(record[7]) }
-            return Spending(result)
-        except:
-            return None
-        finally:
-            cursor.close()
+    def getSpending(self, groupId: int, messageId: int) -> Spending:
+        return self.u.query(Spending).filter(
+            (Spending.groupId == groupId) & (Spending.messageId == messageId),
+        ).first()
 
-    def removeCosts(self, groupId):
-        try:
-            cursor = self.sqlite_connection.cursor()
-            cursor.execute(f'delete from costs where groupId = {groupId};')
-            self.sqlite_connection.commit()
-            return True
-        finally:
-            cursor.close()
+    def removeSpendings(self, groupId: int):
+        self.u.query(Spending).filter(Spending.groupId == groupId).delete()
 
-    def removeCost(self, groupId, messageId):
+    def removeSpending(self, groupId: int, messageId: int):
+        self.u.query(Spending).filter((Spending.groupId == groupId) & (Spending.messageId == messageId)).delete()
+
+class DbManager:
+    def __init__(self, path: str = None):
+        dbpath = 'sqlite:///:memory:'
+        if path != None:
+            dbpath = f'sqlite:///{os.path.abspath(path)}'
+        self.main_engine = sa.create_engine(
+            dbpath,
+            echo=False,
+        )
+    
+    def applyMigrations(self):
+        """Applies all pending migrations to current engine"""
+        Migration.__table__.create(self.main_engine, checkfirst=True)
+        dbs = self.newSession()
         try:
-            cursor = self.sqlite_connection.cursor()
-            cursor.execute(f'delete from costs where groupId = {groupId} and messageId = {messageId};')
-            self.sqlite_connection.commit()
-            return True
+            from_id = dbs.u.query(func.max(Migration.id)).scalar()
+            if from_id == None:
+                from_id = -1
+            migrations_path = os.path.join(pathlib.Path(__file__).parent.resolve(), 'migrations')
+            migration_files = sorted([f for f in os.listdir(migrations_path)])
+            for file in migration_files:
+                idx, name, *rest = file.split('_', maxsplit=1)
+                idx = int(idx)
+                name = name.removesuffix('.sql')
+                if idx <= from_id:
+                    continue
+                with open(os.path.join(migrations_path, file), 'r') as file_ptr:
+                    content = file_ptr.read()
+                    print('applying migration - ', file)
+                    connection = self.main_engine.raw_connection()
+                    cursor = connection.cursor()
+                    cursor.executescript(content)
+                    cursor.close()
+                    dbs.u.add(Migration(id=idx, name=name, date=utils.iso_date()))
+                    dbs.commit()
         finally:
-            cursor.close()
+            dbs.close()
+    
+    def newSession(self) -> DbSession:
+        """Creates new isolated session"""
+        DBSession = sessionmaker(
+            binds={
+                Base: self.main_engine,
+            },
+            expire_on_commit=False,
+        )
+        return DbSession(DBSession())

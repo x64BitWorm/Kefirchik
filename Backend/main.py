@@ -1,7 +1,7 @@
 import logging
 from config import Config
 from tg_wrapper import TgWrapper
-from database import Database
+from database import DbManager
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -13,8 +13,9 @@ logger = logging.getLogger(__name__)
 def main() -> None:
     """Start the bot."""
     config = Config()
-    db = Database(config.DB_PATH)
-    tg_wrapper = TgWrapper(config, db)
+    dbManager = DbManager(config.DB_PATH)
+    dbManager.applyMigrations()
+    tg_wrapper = TgWrapper(config, dbManager)
     tg_wrapper.startup()
 
 if __name__ == "__main__":

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 class BotException(Exception):
     def __init__(self, *args):
         super().__init__(*args)
@@ -9,3 +11,6 @@ class BotException(Exception):
 class BotWrongInputException(Exception):
     def __init__(self, *args):
         super().__init__(*args)
+
+def iso_date():
+    return datetime.now().replace(microsecond=0).isoformat()

@@ -18,6 +18,7 @@ Set token variable -
 
 Run -
 ```console
+cd Backend
 python3 main.py
 ```
 
