@@ -147,15 +147,18 @@ def calculate_spendings(expressions, total_sum) -> list[float]:
   
   return [a * x + b for b, a in expressions_values]
 
-def get_spending_meta_info(expressions: list[str], total_sum: float) -> tuple[SpendingType, float]:
+def get_spending_meta_info(expressions: list[str], total_sum: float) -> tuple[SpendingType, float, float | None]:
   context = ExpressionContext().with_total_sum(total_sum)
   expressions_values = list(map(lambda expr: parse_expression(expr, context), expressions))
-  spendingType = SpendingType.SIMPLE
+  expressions_sum = [sum(i) for i in zip(*expressions_values)]
+  # a * x + b = total_sum
+  a_total = expressions_sum[1]
+  b_total = expressions_sum[0]
+  x_value: float | None = None
+  if a_total != 0.0:
+    x_value = (total_sum - b_total) / a_total
+  spendingType = SpendingType.SIMPLE if a_total == 0.0 else SpendingType.RELATIVE
   currentAmount = 0.0
-  for _, a in expressions_values:
-    if a > 0:
-      spendingType = SpendingType.RELATIVE
-      break
   if spendingType == SpendingType.SIMPLE:
-    currentAmount = sum([b for b, _ in expressions_values])
-  return (spendingType, total_sum - currentAmount)
+    currentAmount = b_total
+  return (spendingType, total_sum - currentAmount, x_value)

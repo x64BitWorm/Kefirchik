@@ -26,7 +26,7 @@ class TestMessage(IMessage):
     def getText(self) -> str:
         return self.text
     
-    def getReplyMessageId(self) -> int:
+    def getReplyMessageId(self) -> int | None:
         return self.reply_id
     
     def getReplyMessage(self) -> IMessage:

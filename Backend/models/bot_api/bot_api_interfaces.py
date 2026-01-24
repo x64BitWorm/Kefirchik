@@ -20,7 +20,7 @@ class IMessage:
     def isPhoto(self) -> bool:
         pass
 
-    def getReplyMessageId(self) -> int:
+    def getReplyMessageId(self) -> int | None:
         pass
 
     def getReplyMessage(self) -> IMessage:

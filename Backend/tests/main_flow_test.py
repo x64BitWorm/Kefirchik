@@ -344,6 +344,15 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
 
         await emu.sendMessage('alice', '/report')
         self.assertEqual('eve ➡️ alice 200🎪\nbob ➡️ alice 100🎪\n', emu.getRepliedText())
+    
+    async def test_spending_report(self):
+        emu = ChatEmu()
+
+        await emu.sendMessage('a', '/add 1000\n@a 400+x+x\n@b 200+x+x+x\n@c\n@d 50+30\ntea')
+        self.assertEqual('Запомнил🍶 ждем  @c', emu.getRepliedText())
+
+        await emu.sendMessage('a', '/report', reply_id=2) # Reply to 2 message in chat
+        self.assertEqual('Сумма: 1000\n\n@a 400+x+x (400 + 2x)\n@b 200+x+x+x (200 + 3x)\n@c не заполнил\n@d 80', emu.getRepliedText())
 
 if __name__ == "__main__":
     unittest.main()

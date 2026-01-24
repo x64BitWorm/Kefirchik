@@ -5,6 +5,7 @@ import io
 import random
 from collections import defaultdict
 
+from services import calculations
 from utils import timestamp_to_datestr
 from services.formatters import formatMoney
 from handlers import spendings_handler
@@ -119,6 +120,39 @@ def getReportInfo(spendings: list[Spending]) -> ReportInfoDto:
         return ReportInfoDto(transactions_count=len(transactions), text=answer)
     else:
         return ReportInfoDto(transactions_count=0, text='⚠️ Нет записанных трат')
+
+# Составить отчет по трате
+def getSpendingReport(spending: Spending) -> str:
+    result = f'Сумма: {formatMoney(spending.costAmount)}\n'
+    x_value: float | None = None
+    if spending.isCompleted:
+        metaInfo = spendings_handler.getSpendingMetaInfo(spending)
+        x_value = metaInfo.xValue
+        if x_value == 0.0 or x_value == None:
+            result += 'Трата завершена\n'
+        else:
+            result += f'x = {x_value}\n'
+    debtors = spending.debtors
+    for debtor, value in debtors.items():
+        if value == '':
+            result += f'\n@{debtor} не заполнил'
+            continue
+        context = calculations.ExpressionContext().with_total_sum(spending.costAmount)
+        b_value, a_value = calculations.parse_expression(value, context)
+        valueStr = value
+        explainStr = f'{formatMoney(b_value)}'
+        if a_value != 0.0:
+            explainStr += f' + {formatMoney(float(a_value))}x'
+        if a_value == 0.0:
+            valueStr = formatMoney(b_value)
+        elif x_value != None:
+            valueStr = formatMoney(b_value + a_value * x_value)
+        result += f'\n@{debtor}'
+        if len(valueStr):
+            result += f' {valueStr}'
+        if valueStr != explainStr and len(explainStr):
+            result += f' ({explainStr})'
+    return result
 
 # Составить текст о незавершённой трате
 def getUncompletedWarningText(uncompletedSpending: Spending) -> str:

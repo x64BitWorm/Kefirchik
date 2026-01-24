@@ -19,17 +19,16 @@ class ChatEmu:
         try:
             self.ctx.messages[msg.message_id] = msg
             self.ctx.last_msg_id += 1
-            if reply_id == None:
-                command = text.split()[0]
-                if command == '/start':
-                    await self.handlerFacade.start_command(msg, dbs)
-                elif command == '/add':
-                    await self.handlerFacade.add_command(msg, dbs)
-                elif command == '/report':
-                    await self.handlerFacade.report_command(msg, dbs)
-                elif command == '/reset':
-                    await self.handlerFacade.reset_command(msg, dbs)
-            else:
+            command = text.split()[0]
+            if command == '/start':
+                await self.handlerFacade.start_command(msg, dbs)
+            elif command == '/add':
+                await self.handlerFacade.add_command(msg, dbs)
+            elif command == '/report':
+                await self.handlerFacade.report_command(msg, dbs)
+            elif command == '/reset':
+                await self.handlerFacade.reset_command(msg, dbs)
+            elif reply_id != None:
                 await self.handlerFacade.reply_command(msg, dbs)
         finally:
             dbs.close()
