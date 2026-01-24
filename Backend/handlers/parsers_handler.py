@@ -1,3 +1,4 @@
+import utils
 import services.calculations as calculations
 import re
 from models.dto.parser_dto import ParsedSpendingBody
@@ -11,7 +12,7 @@ class ParsedQuery:
 
         first_line_pattern = r'^/(?P<command>\w+)(?:@\w+)?\s+(?P<amount_expr>.+)\s*$'
         
-        lines = text.splitlines()
+        lines = utils.unify_whitespace_symbols(text).splitlines()
         if not lines:
             raise Exception("Empty message")
         

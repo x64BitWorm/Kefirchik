@@ -15,10 +15,10 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
         self.assertEqual('bob ➡️ alice 200.5🎪\n', emu.getRepliedText())
 
 
-    async def test_add_spending_with_spaces(self):
+    async def test_add_spending_with_whitespaces(self):
         emu = ChatEmu()
 
-        await emu.sendMessage('alice', '/add 2 +   2\n@bob 1+  1     + 1   +1\ntea')
+        await emu.sendMessage('alice', '/add 2 +\t\xA0 2\n@bob 1+  1     + 1   +1\ntea')
         self.assertEqual('Запомнил🍶', emu.getRepliedText())
         
         await emu.sendMessage('alice', '/report')

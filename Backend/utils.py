@@ -1,4 +1,5 @@
 from datetime import datetime
+import re
 from zoneinfo import ZoneInfo
 
 class BotException(Exception):
@@ -18,3 +19,7 @@ def iso_date():
 
 def timestamp_to_datestr(timestamp: int) -> str:
     return datetime.fromtimestamp(timestamp, ZoneInfo('Europe/Moscow')).strftime('%d.%m.%Y %H:%M')
+
+def unify_whitespace_symbols(s: str):
+    """ Replace \\t, 0xA0 to \s """
+    return re.sub(r'[\t\xA0]', ' ', s)
