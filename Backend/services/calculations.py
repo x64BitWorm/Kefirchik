@@ -11,6 +11,14 @@ opening_brackets = "([{<"
 closing_brackets = ")]}>"
 operation_priorities = {"-" : 1, "+": 1, "*": 2, "/": 3}
 
+class ExpressionContext:
+  def __init__(self):
+    self.total_sum: float | None = None
+  
+  def with_total_sum(self, total_sum: float) -> 'ExpressionContext':
+    self.total_sum = total_sum
+    return self
+
 def get_operation_priorities(expr: str):
   bracket_depth = 0
   bracket_priority = 9
@@ -45,9 +53,13 @@ def trim_expr(expr: str):
     else:
       expr = expr1
 
-def calculate_token(expr):
+def calculate_token(expr, context: ExpressionContext):
   if expr == 'x':
     return (0, 1)
+  elif expr == 's':
+    if context.total_sum == None:
+      raise BotException(f"Так нельзя использовать переменную s")
+    return (context.total_sum, 0)
   else:
     try:
       return (float(expr), 0)
@@ -73,12 +85,12 @@ def calculate_operation(left_value, op, right_value):
   else:
     raise Exception("Unsupported operation encountered.")
 
-def calculate(expr: str):
+def calculate(expr: str, context: ExpressionContext):
   expr = trim_expr(expr)
   split_index = get_split_index(expr)
 
   if split_index == -1:
-    return calculate_token(expr)
+    return calculate_token(expr, context)
   else:
     left_expr = expr[:split_index]
     right_expr = expr[split_index + 1:]
@@ -87,8 +99,8 @@ def calculate(expr: str):
     if left_expr == '' and op == '-':
       left_expr = '0'
 
-    left_value = calculate(left_expr)
-    right_value = calculate(right_expr)
+    left_value = calculate(left_expr, context)
+    right_value = calculate(right_expr, context)
 
     return calculate_operation(left_value, op, right_value)
 
@@ -108,14 +120,15 @@ def validate_brackets(expr: str):
 def validate_expression(expr: str):
   validate_brackets(expr)
 
-def parse_expression(expr: str | float):
+def parse_expression(expr: str | float, context: ExpressionContext | None):
   expr = str(expr).lower().replace(' ', '').replace('х','x').replace(',','.')
   validate_expression(expr)
-  return calculate(expr)
+  return calculate(expr, context)
 
 # Matches each expression with its calculated value
 def calculate_spendings(expressions, total_sum) -> list[float]:
-  expressions_values = list(map(parse_expression, expressions))
+  context = ExpressionContext().with_total_sum(total_sum)
+  expressions_values = list(map(lambda expr: parse_expression(expr, context), expressions))
   expressions_sum = [sum(i) for i in zip(*expressions_values)]
   # a * x + b = total_sum
   a_total = expressions_sum[1]
@@ -135,7 +148,8 @@ def calculate_spendings(expressions, total_sum) -> list[float]:
   return [a * x + b for b, a in expressions_values]
 
 def get_spending_meta_info(expressions: list[str], total_sum: float) -> tuple[SpendingType, float]:
-  expressions_values = list(map(parse_expression, expressions))
+  context = ExpressionContext().with_total_sum(total_sum)
+  expressions_values = list(map(lambda expr: parse_expression(expr, context), expressions))
   spendingType = SpendingType.SIMPLE
   currentAmount = 0.0
   for _, a in expressions_values:

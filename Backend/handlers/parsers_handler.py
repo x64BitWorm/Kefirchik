@@ -26,7 +26,7 @@ class ParsedQuery:
         if any(x in amount_expr for x in ('x', 'X', 'х', 'Х')):
             raise Exception('Использование x в сумме запрещено')
         else:
-            total = calculations.parse_expression(amount_expr)
+            total = calculations.parse_expression(amount_expr, calculations.ExpressionContext())
             self.amount = total[0]
         
         # Following lines parsing (debtors, debts, comments)

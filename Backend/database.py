@@ -118,7 +118,7 @@ class DbManager:
             echo=False,
         )
     
-    def applyMigrations(self):
+    def applyMigrations(self, showLogs = True):
         """Applies all pending migrations to current engine"""
         Migration.__table__.create(self.main_engine, checkfirst=True)
         dbs = self.newSession()
@@ -136,7 +136,8 @@ class DbManager:
                     continue
                 with open(os.path.join(migrations_path, file), 'r') as file_ptr:
                     content = file_ptr.read()
-                    print('applying migration - ', file)
+                    if showLogs:
+                        print('applying migration - ', file)
                     connection = self.main_engine.raw_connection()
                     cursor = connection.cursor()
                     cursor.executescript(content)

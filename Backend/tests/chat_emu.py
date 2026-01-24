@@ -10,7 +10,7 @@ class ChatEmu:
         self.ctx = ChatContext(self.db)
         self.handlerFacade = HandlersFacade()
         self.callbackFacade = CallbacksFacade()
-        self.db.applyMigrations()
+        self.db.applyMigrations(showLogs=False)
         self.ctx.createChat()
 
     async def sendMessage(self, user: str, text: str, reply_id: int = None):
