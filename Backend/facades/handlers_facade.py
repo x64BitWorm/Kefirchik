@@ -81,6 +81,17 @@ class HandlersFacade:
         group = dbs.getGroup(message.getChatId())
         spendings = dbs.getSpendings(group.id)
 
+        # Отчет по трате
+        replyMessageId = message.getReplyMessageId()
+        if replyMessageId != None:
+            spending = dbs.getSpending(group.id, replyMessageId)
+            if spending == None:
+                await message.reply_text('🤓 Для получения отчета по трате, отвечайте на сообщение от бота с текстом "Запомнил..."')
+                return
+            report_text = reports_handler.getSpendingReport(spending)
+            await message.reply_text(report_text)
+            return
+
         uncompletedSpending = reports_handler.getUncompletedSpending(spendings)
         warningUncompleted = ''
         reply_to_message_id = None

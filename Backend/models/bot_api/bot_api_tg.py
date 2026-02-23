@@ -22,7 +22,9 @@ class TgMessage(IMessage):
     def isPhoto(self) -> bool:
         return self.msgObj.message.photo
 
-    def getReplyMessageId(self) -> int:
+    def getReplyMessageId(self) -> int | None:
+        if self.msgObj.message.reply_to_message == None:
+            return None
         return self.msgObj.message.reply_to_message.id
     
     def getReplyMessage(self) -> IMessage:

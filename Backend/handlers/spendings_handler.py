@@ -31,8 +31,8 @@ def getDebtorsWithAmounts(debtors, amount):
 def getSpendingMetaInfo(spending: Spending) -> SpendingMetaInfo:
     notFilledUsers = getUnfilledUsers(spending.debtors)
     expressions = list(filter(lambda x: x != '', spending.debtors.values()))
-    spendingType, remainingAmount = calculations.get_spending_meta_info(expressions, spending.costAmount)
-    return SpendingMetaInfo(type=spendingType, remainingAmount=remainingAmount, notFilledUsers=notFilledUsers)
+    spendingType, remainingAmount, xValue = calculations.get_spending_meta_info(expressions, spending.costAmount)
+    return SpendingMetaInfo(type=spendingType, remainingAmount=remainingAmount, xValue=xValue, notFilledUsers=notFilledUsers)
 
 def getExpressionOfReply(text: str, user: str, spending: Spending) -> str:
     expression = text
@@ -42,7 +42,8 @@ def getExpressionOfReply(text: str, user: str, spending: Spending) -> str:
         if len(spending.debtors[user]) == 0:
             raise BotWrongInputException()
         expression = spending.debtors[user] + expression[3:]
-    answer = calculations.parse_expression(expression)
+    calculationContext = calculations.ExpressionContext().with_total_sum(spending.costAmount)
+    answer = calculations.parse_expression(expression, calculationContext)
     if answer[0] < 0 or answer[0] > spending.costAmount:
         raise BotWrongInputException()
     return expression

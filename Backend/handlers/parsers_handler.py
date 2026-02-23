@@ -1,3 +1,4 @@
+import utils
 import services.calculations as calculations
 import re
 from models.dto.parser_dto import ParsedSpendingBody
@@ -11,7 +12,7 @@ class ParsedQuery:
 
         first_line_pattern = r'^/(?P<command>\w+)(?:@\w+)?\s+(?P<amount_expr>.+)\s*$'
         
-        lines = text.splitlines()
+        lines = utils.unify_whitespace_symbols(text).splitlines()
         if not lines:
             raise Exception("Empty message")
         
@@ -25,7 +26,7 @@ class ParsedQuery:
         if any(x in amount_expr for x in ('x', 'X', 'х', 'Х')):
             raise Exception('Использование x в сумме запрещено')
         else:
-            total = calculations.parse_expression(amount_expr)
+            total = calculations.parse_expression(amount_expr, calculations.ExpressionContext())
             self.amount = total[0]
         
         # Following lines parsing (debtors, debts, comments)

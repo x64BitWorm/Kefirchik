@@ -5,7 +5,8 @@ class SpendingType(Enum):
     RELATIVE = 2,   # With X's
 
 class SpendingMetaInfo:
-    def __init__(self, type: SpendingType, remainingAmount: float, notFilledUsers: list[str]):
+    def __init__(self, type: SpendingType, remainingAmount: float, xValue: float | None, notFilledUsers: list[str]):
         self.type = type
         self.remainingAmount = remainingAmount
+        self.xValue = xValue
         self.notFilledUsers = notFilledUsers
