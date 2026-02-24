@@ -23,9 +23,13 @@ class TgMessage(IMessage):
         return self.msgObj.message.photo
 
     def getReplyMessageId(self) -> int | None:
-        if self.msgObj.message.reply_to_message == None:
+        reply_message = self.msgObj.message.reply_to_message
+        if reply_message == None:
             return None
-        return self.msgObj.message.reply_to_message.id
+        # Telegram bot api returns messages in topics as reply to main thread
+        if self.msgObj.message.is_topic_message and reply_message.id == self.msgObj.message.message_thread_id:
+            return None
+        return reply_message.id
     
     def getReplyMessage(self) -> IMessage:
         class ReplyMessage:
