@@ -345,6 +345,22 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
         await emu.sendMessage('alice', '/report')
         self.assertEqual('eve ➡️ alice 200🎪\nbob ➡️ alice 100🎪\n', emu.getRepliedText())
     
+    async def test_add_for_everyone(self):
+        emu = ChatEmu()
+
+        # First, create some spendings to establish users in the group
+        await emu.sendMessage('alice', '/add 100\n@bob 50\n@charlie 50')
+        self.assertEqual('Запомнил🍶', emu.getRepliedText())
+        
+        # Now add an expense with no debtors specified - should split among all users
+        await emu.sendMessage('alice', '/add 600\ntaxi')
+        self.assertEqual('Запомнил🍶', emu.getRepliedText())
+        
+        # Check report: 600 split equally among alice, bob, charlie (3 users) = 200 each
+        # Since alice paid, bob and charlie owe alice 200 each
+        await emu.sendMessage('alice', '/report')
+        self.assertEqual('bob ➡️ alice 250🎪\ncharlie ➡️ alice 250🎪\n', emu.getRepliedText())
+
     async def test_spending_report(self):
         emu = ChatEmu()
 
