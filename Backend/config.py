@@ -10,12 +10,15 @@ class Config:
         # default local run
         self.USE_WEB_HOOKS = False
         self.DB_PATH = DB_DEBUG_PATH
+        self.IS_PROD = False
         MODE = os.environ.get('MODE')
         if MODE == 'release':
             self.USE_WEB_HOOKS = True
+            self.IS_PROD = True
             self.DB_PATH = DB_RELEASE_PATH
         elif MODE == 'release-pooling':
             self.USE_WEB_HOOKS = False
+            self.IS_PROD = True
             self.DB_PATH = DB_RELEASE_PATH
         elif MODE == 'debug':
             self.USE_WEB_HOOKS = False

@@ -17,7 +17,7 @@ class TgWrapper:
     def startup(self):
         applicationBuilder = Application.builder().token(self.config.TOKEN)
         if self.config.PROXY_URL != None:
-            applicationBuilder = applicationBuilder.proxy(self.config.PROXY_URL)
+            applicationBuilder = applicationBuilder.proxy(self.config.PROXY_URL).get_updates_proxy(self.config.PROXY_URL)
         application = applicationBuilder.build()
         application.add_handler(CommandHandler("start", self.wrap(self.handlerFacade.start_command)))
         application.add_handler(CommandHandler("add", self.wrap(self.handlerFacade.add_command)))
@@ -54,7 +54,7 @@ class TgWrapper:
                 await message.set_reaction(constants.ReactionEmoji.CLOWN_FACE)
             except Exception as e:
                 await message.set_reaction(constants.ReactionEmoji.CRYING_FACE)
-                if not self.config.USE_WEB_HOOKS:
+                if not self.config.IS_PROD:
                     raise e
             finally:
                 session.close()
