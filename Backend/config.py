@@ -14,6 +14,9 @@ class Config:
         if MODE == 'release':
             self.USE_WEB_HOOKS = True
             self.DB_PATH = DB_RELEASE_PATH
+        elif MODE == 'release-pooling':
+            self.USE_WEB_HOOKS = False
+            self.DB_PATH = DB_RELEASE_PATH
         elif MODE == 'debug':
             self.USE_WEB_HOOKS = False
             self.DB_PATH = DB_RELEASE_PATH
