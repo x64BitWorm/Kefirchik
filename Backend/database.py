@@ -47,6 +47,10 @@ class IDbSession:
         """Delete specific spending"""
         pass
 
+    def getAllUsers(self, groupId: int, limit: int = 100) -> list[str]:
+        """Get all unique users from recent spendings in group (up to limit spendings)"""
+        pass
+
 class DbSession(IDbSession):
     def __init__(self, session: Session):
         super().__init__(session)
@@ -107,6 +111,18 @@ class DbSession(IDbSession):
 
     def removeSpending(self, groupId: int, messageId: int):
         self.u.query(Spending).filter((Spending.groupId == groupId) & (Spending.messageId == messageId)).delete()
+
+    def getAllUsers(self, groupId: int, limit: int = 100) -> list[str]:
+        # Query the most recent spendings up to limit, ordered by messageId (which increases over time)
+        spendings = self.u.query(Spending).filter(
+            Spending.groupId == groupId
+        ).order_by(Spending.messageId.desc()).limit(limit).all()
+        users = set()
+        for spending in spendings:
+            users.add(spending.telegramFromId)
+            # debtors is a dict with username keys
+            users.update(spending.debtors.keys())
+        return sorted(list(users))
 
 class DbManager:
     def __init__(self, path: str = None):

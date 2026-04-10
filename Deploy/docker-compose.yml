@@ -14,3 +14,6 @@ services:
     environment:
       - MODE=${MODE:-release}
       - TG_TOKEN=${TG_TOKEN}
+      - PROXY_URL=${PROXY_URL}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

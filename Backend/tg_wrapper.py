@@ -15,7 +15,10 @@ class TgWrapper:
         self.callbackFacade = CallbacksFacade()
 
     def startup(self):
-        application = Application.builder().token(self.config.TOKEN).build()
+        applicationBuilder = Application.builder().token(self.config.TOKEN)
+        if self.config.PROXY_URL != None:
+            applicationBuilder = applicationBuilder.proxy(self.config.PROXY_URL)
+        application = applicationBuilder.build()
         application.add_handler(CommandHandler("start", self.wrap(self.handlerFacade.start_command)))
         application.add_handler(CommandHandler("add", self.wrap(self.handlerFacade.add_command)))
         application.add_handler(CommandHandler("report", self.wrap(self.handlerFacade.report_command)))

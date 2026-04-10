@@ -51,3 +51,13 @@ def getExpressionOfReply(text: str, user: str, spending: Spending) -> str:
 def getUsersFromSpendings(spendings: list[Spending]) -> str:
     users = {spending.telegramFromId for spending in spendings}
     return "@" + " @".join(sorted(users)) if users else ""
+
+def addEvenSpendingForUsers(data: parsers_handler.ParsedQuery, users: list[str]):
+    # If no debtors specified, split among all users in the group
+    if not data.debtors:
+        if not users:
+            raise BotWrongInputException()
+        # Create equal split expressions: s/n for each user
+        n = len(users)
+        for user in users:
+            data.debtors[user] = f's/{n}'
