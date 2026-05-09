@@ -2,8 +2,9 @@ FROM python:3.11-slim
 
 WORKDIR /Application
 
-COPY Backend ./
+COPY requirements.txt ./
+RUN pip install -r requirements.txt --upgrade
 
-RUN pip install python-telegram-bot "python-telegram-bot[webhooks]" SQLAlchemy --upgrade
+COPY Backend ./
 
 ENTRYPOINT ["python", "main.py"]
