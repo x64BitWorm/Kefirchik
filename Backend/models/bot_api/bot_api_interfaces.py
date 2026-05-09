@@ -29,7 +29,7 @@ class IMessage:
     def getCallbackQuery(self) -> ICallback:
         pass
 
-    async def reply_text(self, message: str, reply_markup = None, reply_to_message_id = None) -> int:
+    async def reply_text(self, message: str, reply_markup = None, reply_to_message_id = None, parse_mode = None, disable_web_page_preview = None) -> int:
         pass
 
     async def edit_text(self, message: str, reply_markup = None):

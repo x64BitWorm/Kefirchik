@@ -35,7 +35,7 @@ class TestMessage(IMessage):
     def getCallbackQuery(self) -> ICallback:
         return TestCallback(self, self.callback_data)
 
-    async def reply_text(self, message: str, reply_markup = None, reply_to_message_id = None) -> int:
+    async def reply_text(self, message: str, reply_markup = None, reply_to_message_id = None, parse_mode = None, disable_web_page_preview = None) -> int:
         self.ctx.msgQueue.append(QueueMsgType('reply_text', [message, reply_to_message_id]))
         msg = TestMessage(self.ctx, 'bot', message, self.message_id)
         self.ctx.messages[msg.message_id] = msg

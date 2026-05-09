@@ -1,6 +1,7 @@
 import math
 import re
 from queue import LifoQueue
+import utils
 from services.formatters import formatMoney
 from models.dto.spendings_dto import SpendingType
 from utils import BotException
@@ -128,7 +129,10 @@ def parse_expression(expr: str | float, context: ExpressionContext | None):
 # Matches each expression with its calculated value
 def calculate_spendings(expressions, total_sum) -> list[float]:
   context = ExpressionContext().with_total_sum(total_sum)
-  expressions_values = list(map(lambda expr: parse_expression(expr, context), expressions))
+  try:
+    expressions_values = list(map(lambda expr: parse_expression(expr, context), expressions))
+  except:
+    raise utils.BotWrongInputException('Некорректная сумма у должника, правильный пример - <code>100 + x</code>')
   expressions_sum = [sum(i) for i in zip(*expressions_values)]
   # a * x + b = total_sum
   a_total = expressions_sum[1]

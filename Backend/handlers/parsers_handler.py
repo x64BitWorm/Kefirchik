@@ -14,19 +14,22 @@ class ParsedQuery:
         
         lines = utils.unify_whitespace_symbols(text).splitlines()
         if not lines:
-            raise Exception("Empty message")
+            raise utils.BotWrongInputException("Нужно ввести сумму, должников и комментарий траты")
         
         # First line parsing (command and amount)
         first_line_match = re.match(first_line_pattern, lines[0].strip(), re.IGNORECASE)
         if not first_line_match:
-            raise Exception("Invalid command format in first line")
+            raise utils.BotWrongInputException("На первой строке нужно указать сумму")
         self.command = first_line_match.group("command").lower()
         amount_expr = first_line_match.group("amount_expr")
         
         if any(x in amount_expr for x in ('x', 'X', 'х', 'Х')):
-            raise Exception('Использование x в сумме запрещено')
+            raise utils.BotWrongInputException('Использование x в сумме запрещено')
         else:
-            total = calculations.parse_expression(amount_expr, calculations.ExpressionContext())
+            try:
+                total = calculations.parse_expression(amount_expr, calculations.ExpressionContext())
+            except:
+                raise utils.BotWrongInputException('На первой строке должна быть сумма числом - <code>/add 500</code>')
             self.amount = total[0]
         
         # Following lines parsing (debtors, debts, comments)
@@ -51,7 +54,7 @@ def parseSpendingBody(from_username: str, text: str) -> ParsedSpendingBody:
                         user = from_username
                     debtors[user] = expr
             else:
-                raise Exception('Неверный формат описания траты')
+                raise utils.BotWrongInputException('Неверный формат описания траты')
         else:
             comment += line + '\n'
     comment = comment.strip()

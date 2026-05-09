@@ -40,12 +40,12 @@ def getExpressionOfReply(text: str, user: str, spending: Spending) -> str:
         raise BotException('🤓☝️ Внатуре задрот')
     if expression.startswith('...'):
         if len(spending.debtors[user]) == 0:
-            raise BotWrongInputException()
+            raise BotWrongInputException('Надо указать должников')
         expression = spending.debtors[user] + expression[3:]
     calculationContext = calculations.ExpressionContext().with_total_sum(spending.costAmount)
     answer = calculations.parse_expression(expression, calculationContext)
     if answer[0] < 0 or answer[0] > spending.costAmount:
-        raise BotWrongInputException()
+        raise BotWrongInputException(f'У должника неверная сумма -{answer[0]}')
     return expression
 
 def getUsersFromSpendings(spendings: list[Spending]) -> str:
@@ -56,7 +56,7 @@ def addEvenSpendingForUsers(data: parsers_handler.ParsedQuery, users: list[str])
     # If no debtors specified, split among all users in the group
     if not data.debtors:
         if not users:
-            raise BotWrongInputException()
+            raise BotWrongInputException('Не указаны должники')
         # Create equal split expressions: s/n for each user
         n = len(users)
         for user in users:
