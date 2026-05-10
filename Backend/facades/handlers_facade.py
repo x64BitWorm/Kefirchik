@@ -1,4 +1,3 @@
-from utils import BotWrongInputException
 from models.dto.spendings_dto import SpendingType
 from models.bot_api.bot_api_interfaces import IMessage
 from services.constants import textLastDebtorQuestion
@@ -16,23 +15,19 @@ class HandlersFacade:
         await message.reply_text(text, reply_markup=reply_markup)
 
     async def add_command(self, message: IMessage, dbs: IDbSession) -> None:
-        try:
-            text = message.getCaption() if message.isPhoto() else message.getText()
-            data = parsers_handler.ParsedQuery(text, message.getUsername())
-            
-            # If no debtors specified, split among all users in the group
-            if not data.debtors:
-                spendings_handler.addEvenSpendingForUsers(data, dbs.getAllUsers(message.getChatId()))
-            
-            reply_text = spendings_handler.getReplyText(data)
-            spendingCompleted = spendings_handler.isSpendingCompleted(data.debtors)
-            debtors = spendings_handler.getDebtorsWithAmounts(data.debtors, data.amount) if spendingCompleted else data.debtors
-            reply_message_id = await message.reply_text(reply_text, reply_markup=getCancelMarkup())
-            dbs.insertSpending(reply_message_id, message.getChatId(), spendingCompleted, message.getUsername(), data.amount, debtors, data.comment)
-            dbs.commit()
-        except BotWrongInputException as e:
-            text = f"❌ {e.text}\n<a href=\"{help_handler.getInstructionLink()}\">Как исправить?</a>"
-            await message.reply_text(text, parse_mode='HTML', disable_web_page_preview=True)
+        text = message.getCaption() if message.isPhoto() else message.getText()
+        data = parsers_handler.ParsedQuery(text, message.getUsername())
+        
+        # If no debtors specified, split among all users in the group
+        if not data.debtors:
+            spendings_handler.addEvenSpendingForUsers(data, dbs.getAllUsers(message.getChatId()))
+        
+        reply_text = spendings_handler.getReplyText(data)
+        spendingCompleted = spendings_handler.isSpendingCompleted(data.debtors)
+        debtors = spendings_handler.getDebtorsWithAmounts(data.debtors, data.amount) if spendingCompleted else data.debtors
+        reply_message_id = await message.reply_text(reply_text, reply_markup=getCancelMarkup())
+        dbs.insertSpending(reply_message_id, message.getChatId(), spendingCompleted, message.getUsername(), data.amount, debtors, data.comment)
+        dbs.commit()
 
     async def reply_command(self, message: IMessage, dbs: IDbSession) -> None:
         group_id = dbs.getGroup(message.getChatId()).id

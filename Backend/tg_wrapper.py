@@ -1,3 +1,4 @@
+from handlers import help_handler
 from facades.callbacks_facade import CallbacksFacade
 from config import Config
 from database import DbManager
@@ -51,7 +52,8 @@ class TgWrapper:
             except BotException as e:
                 await message.reply_text(str(e))
             except BotWrongInputException as e:
-                await message.set_reaction(constants.ReactionEmoji.CLOWN_FACE)
+                text = f"❌ {e.text}\n<a href=\"{help_handler.getInstructionLink()}\">Как исправить?</a>"
+                await message.reply_text(text, parse_mode='HTML', disable_web_page_preview=True)
             except Exception as e:
                 await message.set_reaction(constants.ReactionEmoji.CRYING_FACE)
                 if not self.config.IS_PROD:

@@ -1,3 +1,4 @@
+import utils
 from chat_emu import ChatEmu
 import unittest
 from telegram import constants
@@ -373,14 +374,14 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
     async def test_spending_adding_errors(self):
         emu = ChatEmu()
 
-        await emu.sendMessage('alice', '/add\n@a 4')
-        self.assertEqual('❌ На первой строке нужно указать сумму', emu.getRepliedText().split('\n')[0])
+        with self.assertRaisesRegex(utils.BotWrongInputException, 'На первой строке нужно указать сумму'):
+            await emu.sendMessage('alice', '/add\n@a 4')
 
-        await emu.sendMessage('alice', '/add 300\n@a test')
-        self.assertEqual('❌ Некорректная сумма у должника, правильный пример - <code>100 + x</code>', emu.getRepliedText().split('\n')[0])
-
-        await emu.sendMessage('alice', '/add 300')
-        self.assertEqual('❌ Не указаны должники', emu.getRepliedText().split('\n')[0])
+        with self.assertRaisesRegex(utils.BotWrongInputException, 'Некорректная сумма у должника'):
+            await emu.sendMessage('alice', '/add 300\n@a test')
+        
+        with self.assertRaisesRegex(utils.BotWrongInputException, 'Не указаны должники'):
+            await emu.sendMessage('alice', '/add 300')
 
 if __name__ == "__main__":
     unittest.main()
