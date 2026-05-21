@@ -11,7 +11,8 @@ class HandlersFacade:
         pass
 
     async def start_command(self, message: IMessage, dbs: IDbSession) -> None:
-        await message.reply_text(help_handler.getHelpText())
+        text, reply_markup = help_handler.getHelpTextAndMarkup()
+        await message.reply_text(text, reply_markup=reply_markup)
 
     async def add_command(self, message: IMessage, dbs: IDbSession) -> None:
         text = message.getCaption() if message.isPhoto() else message.getText()

@@ -40,8 +40,8 @@ class TgMessage(IMessage):
     def getCallbackQuery(self) -> ICallback:
         return TgCallback(self.msgObj.callback_query)
 
-    async def reply_text(self, message: str, reply_markup = None, reply_to_message_id = None) -> int:
-        return (await self.msgObj.message.reply_text(message, reply_markup=reply_markup, reply_to_message_id=reply_to_message_id)).id
+    async def reply_text(self, message: str, reply_markup = None, reply_to_message_id = None, parse_mode = None, disable_web_page_preview = None) -> int:
+        return (await self.msgObj.message.reply_text(message, reply_markup=reply_markup, reply_to_message_id=reply_to_message_id, parse_mode=parse_mode, disable_web_page_preview=disable_web_page_preview)).id
     
     async def edit_text(self, message: str, reply_markup = None):
         await self.msgObj.message.edit_text(message, reply_markup=reply_markup)

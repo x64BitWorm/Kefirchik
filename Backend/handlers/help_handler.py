@@ -1,20 +1,11 @@
-def getHelpText() -> str:
-    message = """
-Привет! Это бот для расчета совместных трат
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-* тот кто платил вызывает команду add (удерживает ее в тг пальцем) и пишет сумму которую потратил через пробел.
-потом тэгает на каждой новой строчке чела и через пробел пишет сколько он потратил.
-* а еще мы добавили немного задротства, поэтому в выражении кто скока потратил можно писать не просто число, а целое выражение (например 100+50/2), и даже переменную x,
-для добавления общей траты (например если пили общий чай, то можно написать что типа Артем потратил 300+x, где 300 его личные траты, а x это чтото общее).
-все строчки в add которые не начинаются с тэга это комменты (например "за пончики").
-* ну и после того как добавили все траты можно дернуть команду report и она выплюнет кто скока кому переводит бабок.
-* а команда reset (ну очень опасная) удаляет все траты и их придеца заполнять заново
+def getHelpTextAndMarkup() -> tuple[str, InlineKeyboardMarkup]:
+    message = "Рады представить вам Kefirchik - бота, который сделает деление общих трат в группах максимально простым и честным! 😎"
+    markup = InlineKeyboardMarkup([
+        [InlineKeyboardButton("Как пользоваться?", url=getInstructionLink())]
+    ])
+    return message, markup
 
-пример:
-/add@kefirchik42_bot 1500
-@x64BitWorm 500+x
-@Artem_Barsov 300+x
-@Grisha_Barsov 100
-@Random_Name_0 100
-"""
-    return message
+def getInstructionLink() -> str:
+    return "https://telegra.ph/Kefirchik---Gajd-po-samomu-chestnomu-deleniyu-trat-05-09"
