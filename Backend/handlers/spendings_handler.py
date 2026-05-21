@@ -45,7 +45,7 @@ def getExpressionOfReply(text: str, user: str, spending: Spending) -> str:
     calculationContext = calculations.ExpressionContext().with_total_sum(spending.costAmount)
     answer = calculations.parse_expression(expression, calculationContext)
     if answer[0] < 0 or answer[0] > spending.costAmount:
-        raise BotWrongInputException(f'У должника неверная сумма -{answer[0]}')
+        raise BotWrongInputException(f'У должника неверная сумма {answer[0]}')
     return expression
 
 def getUsersFromSpendings(spendings: list[Spending]) -> str:
