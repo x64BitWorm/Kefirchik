@@ -77,7 +77,7 @@ class DbSession(IDbSession):
     def getSpendings(self, groupId: int) -> list[Spending]:
         return self.u.query(Spending).filter(
             Spending.groupId == groupId
-        ).all()
+        ).order_by(Spending.messageId.asc()).all()
 
     def insertSpending(self, messageId: int, groupId: int, isCompleted: bool, telegramFromId: str, costAmount: float, debtors, desc: str):
         now = int(datetime.now().timestamp())
@@ -117,12 +117,13 @@ class DbSession(IDbSession):
         spendings = self.u.query(Spending).filter(
             Spending.groupId == groupId
         ).order_by(Spending.messageId.desc()).limit(limit).all()
-        users = set()
+        users = {}
         for spending in spendings:
-            users.add(spending.telegramFromId)
+            users.setdefault(utils.normalize_username(spending.telegramFromId), spending.telegramFromId)
             # debtors is a dict with username keys
-            users.update(spending.debtors.keys())
-        return sorted(list(users))
+            for user in spending.debtors.keys():
+                users.setdefault(utils.normalize_username(user), user)
+        return [users[user] for user in sorted(users.keys())]
 
 class DbManager:
     def __init__(self, path: str = None):

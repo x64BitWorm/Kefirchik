@@ -6,7 +6,7 @@ import random
 from collections import defaultdict
 
 from services import calculations
-from utils import timestamp_to_datestr
+from utils import normalize_username, timestamp_to_datestr
 from services.formatters import formatMoney
 from handlers import spendings_handler
 from models.dto.report_dto import ReportInfoDto, ReportOverviewDto, ReportTransactionDto
@@ -22,20 +22,25 @@ def generateReport(spendings: list[Spending]) -> ReportOverviewDto:
     papiks_totals = defaultdict(int)
     balance_of = defaultdict(int)
     debtors_totals = defaultdict(int)
+    display_names = {}
     for spending in spendings:
         if not spending.isCompleted:
             continue
-        papik = spending.telegramFromId
+        papik = normalize_username(spending.telegramFromId)
+        display_names[papik] = spending.telegramFromId
         cost = spending.costAmount
         papiks_totals[papik] += cost
         balance_of[papik] += cost
         for debtor, share in spending.debtors.items():
-            debtors_totals[debtor] += share
-            balance_of[debtor] -= share
+            normalized_debtor = normalize_username(debtor)
+            display_names[normalized_debtor] = debtor
+            debtors_totals[normalized_debtor] += share
+            balance_of[normalized_debtor] -= share
     return ReportOverviewDto(
         papiks=dict(papiks_totals),
         debtors=dict(debtors_totals),
-        balances=dict(balance_of)
+        balances=dict(balance_of),
+        display_names=display_names
     )
 
 # Составить список транзакций
@@ -73,6 +78,7 @@ def generateCsv(spendings: list[Spending]) -> io.StringIO:
     writer = csv.writer(output)
 
     names = list(overview.balances.keys())
+    display_names = [overview.displayNames.get(name, name) for name in names]
     summary_rows = [
         ("", "Всего",         "заплатил", overview.papiks),
         ("",      "", "должен заплатить", overview.debtors),
@@ -85,18 +91,22 @@ def generateCsv(spendings: list[Spending]) -> io.StringIO:
         ]
         writer.writerow(row)
 
-    writer.writerow(["Коммент", "Кто", "Сколько"] + names + ["Дата"])
+    writer.writerow(["Коммент", "Кто", "Сколько"] + display_names + ["Дата"])
 
     for spending in spendings:
         if not spending.isCompleted:
             continue
+        spending_debtors = {
+            normalize_username(name): value
+            for name, value in spending.debtors.items()
+        }
         debt_shares = [
-            formatMoney(spending.debtors[name]) if name in spending.debtors else ""
+            formatMoney(spending_debtors[name]) if name in spending_debtors else ""
             for name in names
         ]
         writer.writerow([
             spending.desc,
-            spending.telegramFromId,
+            overview.displayNames.get(normalize_username(spending.telegramFromId), spending.telegramFromId),
             formatMoney(spending.costAmount),
             *debt_shares,
             timestamp_to_datestr(spending.date)
@@ -116,7 +126,9 @@ def getReportInfo(spendings: list[Spending]) -> ReportInfoDto:
     if len(transactions) > 0:
         for transaction in transactions:
             if transaction.amount >= 0.01:
-                answer += f'{transaction.fromNick} ➡️ {transaction.toNick} {formatMoney(transaction.amount)}🎪\n'
+                fromNick = report.displayNames.get(transaction.fromNick, transaction.fromNick)
+                toNick = report.displayNames.get(transaction.toNick, transaction.toNick)
+                answer += f'{fromNick} ➡️ {toNick} {formatMoney(transaction.amount)}🎪\n'
         return ReportInfoDto(transactions_count=len(transactions), text=answer)
     else:
         return ReportInfoDto(transactions_count=0, text='⚠️ Нет записанных трат')

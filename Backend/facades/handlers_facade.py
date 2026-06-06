@@ -5,6 +5,7 @@ from services.telegram_markups import getCancelMarkup, getCsvReportMarkup, getLa
 from handlers import reports_handler, parsers_handler, spendings_handler, help_handler
 from telegram import constants
 from database import IDbSession
+import utils
 
 class HandlersFacade:
     def __init__(self):
@@ -37,7 +38,7 @@ class HandlersFacade:
         
         isDirectCompletion = True
         # папик хочет обновить коммент или дозаполнить трату за должников?
-        if spending.telegramFromId == message.getUsername():
+        if utils.usernames_equal(spending.telegramFromId, message.getUsername()):
             try:
                 spendings_handler.getExpressionOfReply(message.getText(), message.getUsername(), spending)
             except Exception:
@@ -50,7 +51,8 @@ class HandlersFacade:
                 await message.set_reaction(constants.ReactionEmoji.SEE_NO_EVIL_MONKEY)
                 return
             expression = spendings_handler.getExpressionOfReply(message.getText(), message.getUsername(), spending)
-            debtors[message.getUsername()] = expression
+            debtorKey = spendings_handler.findDebtorKey(debtors, message.getUsername()) or message.getUsername()
+            debtors[debtorKey] = expression
             spendingCompleted = spendings_handler.isSpendingCompleted(debtors)
             if spendingCompleted:
                 debtors = spendings_handler.getDebtorsWithAmounts(debtors, spending.costAmount) # resolve x's
@@ -65,8 +67,9 @@ class HandlersFacade:
         else:
             parsedRefilling = parsers_handler.parseSpendingBody(spending.telegramFromId, message.getText())
             for debtor, debt in parsedRefilling.debtors.items():
-                if debtor in spendings_handler.getUnfilledUsers(debtors):
-                    debtors[debtor] = debt
+                debtorKey = spendings_handler.findDebtorKey(debtors, debtor)
+                if debtorKey in spendings_handler.getUnfilledUsers(debtors):
+                    debtors[debtorKey] = debt
             spendingCompleted = spendings_handler.isSpendingCompleted(debtors)
             if spendingCompleted:
                 debtors = spendings_handler.getDebtorsWithAmounts(debtors, spending.costAmount) # resolve x's
