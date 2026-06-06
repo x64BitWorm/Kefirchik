@@ -23,12 +23,6 @@ def getUnfilledUsers(debtors: dict[str, str]) -> list[str]:
             names.append(k)
     return names
 
-def findDebtorKey(debtors: dict[str, str], user: str) -> str | None:
-    for debtor in debtors.keys():
-        if utils.usernames_equal(debtor, user):
-            return debtor
-    return None
-
 def getDebtorsWithAmounts(debtors, amount):
     ans = calculations.calculate_spendings(debtors.values(), amount)
     for i, (k, v) in enumerate(debtors.items()):
@@ -43,7 +37,7 @@ def getSpendingMetaInfo(spending: Spending) -> SpendingMetaInfo:
 
 def getExpressionOfReply(text: str, user: str, spending: Spending) -> str:
     expression = text
-    debtor_key = findDebtorKey(spending.debtors, user)
+    debtor_key = utils.find_username(spending.debtors.keys(), user)
     if len(expression) > 100:
         raise BotException('🤓☝️ Внатуре задрот')
     if expression.startswith('...'):
