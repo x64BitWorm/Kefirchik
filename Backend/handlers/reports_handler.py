@@ -23,17 +23,20 @@ def generateReport(spendings: list[Spending]) -> ReportOverviewDto:
     balance_of = defaultdict(int)
     debtors_totals = defaultdict(int)
     display_names = {}
+    usernames_from_messages = set()
     for spending in spendings:
         if not spending.isCompleted:
             continue
         papik = normalize_username(spending.telegramFromId)
         display_names[papik] = spending.telegramFromId
+        usernames_from_messages.add(papik)
         cost = spending.costAmount
         papiks_totals[papik] += cost
         balance_of[papik] += cost
         for debtor, share in spending.debtors.items():
             normalized_debtor = normalize_username(debtor)
-            display_names[normalized_debtor] = debtor
+            if normalized_debtor not in usernames_from_messages:
+                display_names[normalized_debtor] = debtor
             debtors_totals[normalized_debtor] += share
             balance_of[normalized_debtor] -= share
     return ReportOverviewDto(

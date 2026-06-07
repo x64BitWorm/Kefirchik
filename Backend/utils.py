@@ -33,3 +33,6 @@ def normalize_username(username: str | None) -> str:
 
 def usernames_equal(left: str | None, right: str | None) -> bool:
     return normalize_username(left) == normalize_username(right)
+
+def find_username(usernames, target: str) -> str | None:
+    return next((username for username in usernames if usernames_equal(username, target)), None)

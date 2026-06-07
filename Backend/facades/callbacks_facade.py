@@ -41,7 +41,7 @@ class CallbacksFacade:
         messageText = message.getText()
         users = [u[1:] for u in messageText.split() if u.startswith("@")]
         await query.answer()
-        matchedUser = next((user for user in users if utils.usernames_equal(user, fromUser)), None)
+        matchedUser = utils.find_username(users, fromUser)
         if matchedUser == None:
             return
         users.remove(matchedUser)

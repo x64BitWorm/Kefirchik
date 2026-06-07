@@ -52,9 +52,9 @@ def parseSpendingBody(from_username: str, text: str) -> ParsedSpendingBody:
                 for user in re.findall(r'@(\w+)', users_part):
                     if user in {"я", "Я"}:
                         user = from_username
-                    for existing_user in list(debtors.keys()):
-                        if utils.usernames_equal(existing_user, user):
-                            del debtors[existing_user]
+                    existing_user = utils.find_username(debtors.keys(), user)
+                    if existing_user != None:
+                        del debtors[existing_user]
                     debtors[user] = expr
             else:
                 raise utils.BotWrongInputException('Неверный формат описания траты')

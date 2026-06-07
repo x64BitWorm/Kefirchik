@@ -51,7 +51,7 @@ class HandlersFacade:
                 await message.set_reaction(constants.ReactionEmoji.SEE_NO_EVIL_MONKEY)
                 return
             expression = spendings_handler.getExpressionOfReply(message.getText(), message.getUsername(), spending)
-            debtorKey = spendings_handler.findDebtorKey(debtors, message.getUsername()) or message.getUsername()
+            debtorKey = utils.find_username(debtors.keys(), message.getUsername()) or message.getUsername()
             debtors[debtorKey] = expression
             spendingCompleted = spendings_handler.isSpendingCompleted(debtors)
             if spendingCompleted:
@@ -67,7 +67,7 @@ class HandlersFacade:
         else:
             parsedRefilling = parsers_handler.parseSpendingBody(spending.telegramFromId, message.getText())
             for debtor, debt in parsedRefilling.debtors.items():
-                debtorKey = spendings_handler.findDebtorKey(debtors, debtor)
+                debtorKey = utils.find_username(debtors.keys(), debtor)
                 if debtorKey in spendings_handler.getUnfilledUsers(debtors):
                     debtors[debtorKey] = debt
             spendingCompleted = spendings_handler.isSpendingCompleted(debtors)
