@@ -25,5 +25,14 @@ def timestamp_to_datestr(timestamp: int) -> str:
     return datetime.fromtimestamp(timestamp, ZoneInfo('Europe/Moscow')).strftime('%d.%m.%Y %H:%M')
 
 def unify_whitespace_symbols(s: str):
-    """ Replace \\t, 0xA0 to \s """
+    """Replace \\t and 0xA0 with a regular space."""
     return re.sub(r'[\t\xA0]', ' ', s)
+
+def normalize_username(username: str | None) -> str:
+    return (username or '').casefold()
+
+def usernames_equal(left: str | None, right: str | None) -> bool:
+    return normalize_username(left) == normalize_username(right)
+
+def find_username(usernames, target: str) -> str | None:
+    return next((username for username in usernames if usernames_equal(username, target)), None)

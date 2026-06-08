@@ -38,6 +38,48 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
         await emu.sendMessage('alice', '/report')
         self.assertEqual('eve ➡️ alice 150🎪\nbob ➡️ alice 50🎪\n', emu.getRepliedText())
 
+    async def test_usernames_are_case_insensitive(self):
+        emu = ChatEmu()
+
+        await emu.sendMessage('Alice', '/add 100\n@Bob @bob\ntea')
+        self.assertEqual('Запомнил🍶 ждем  @bob', emu.getRepliedText())
+
+        await emu.sendMessage('BOB', '100', reply_id=2)
+        self.assertEqual(constants.ReactionEmoji.FIRE, emu.getReaction())
+
+        await emu.sendMessage('ALICE', '/report')
+        self.assertEqual('bob ➡️ Alice 100🎪\n', emu.getRepliedText())
+
+    async def test_report_uses_last_mentioned_username_case(self):
+        emu = ChatEmu()
+
+        await emu.sendMessage('alice', '/add 100\n@ALEX 100\ntea')
+        self.assertEqual('Запомнил🍶', emu.getRepliedText())
+
+        await emu.sendMessage('alice', '/add 50\n@Alex 50\ncoffee')
+        self.assertEqual('Запомнил🍶', emu.getRepliedText())
+
+        await emu.sendMessage('alice', '/report')
+        self.assertEqual('Alex ➡️ alice 150🎪\n', emu.getRepliedText())
+
+    async def test_report_prioritizes_sender_username_case(self):
+        scenarios = (
+            (60, '@Bob 30\n@Anna 30'),
+            (90, '@Bob 30\n@Alex 30\n@Anna 30'),
+        )
+        for amount, debtors in scenarios:
+            with self.subTest(debtors=debtors):
+                emu = ChatEmu()
+
+                await emu.sendMessage('Bob', '/add 90\n@Alex 30\n@Bob 30\n@Anna 30')
+                self.assertEqual('Запомнил🍶', emu.getRepliedText())
+
+                await emu.sendMessage('ALEX', f'/add {amount}\n{debtors}')
+                self.assertEqual('Запомнил🍶', emu.getRepliedText())
+
+                await emu.sendMessage('Anna', '/report')
+                self.assertEqual('Anna ➡️ ALEX 30🎪\nAnna ➡️ Bob 30🎪\n', emu.getRepliedText())
+
     async def test_reply_add_debt(self):
         emu = ChatEmu()
 

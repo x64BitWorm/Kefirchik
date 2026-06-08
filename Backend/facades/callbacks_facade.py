@@ -6,6 +6,7 @@ from handlers import reports_handler, spendings_handler
 from database import IDbSession
 from models.bot_api.bot_api_interfaces import IMessage
 from telegram import constants
+import utils
 
 class CallbacksFacade:
     def __init__(self):
@@ -26,7 +27,7 @@ class CallbacksFacade:
         chatId = message.getChatId()
         messageId = message.getMessageId()
         cost = dbs.getSpending(chatId, messageId)
-        if query.getUsername() == cost.telegramFromId:
+        if utils.usernames_equal(query.getUsername(), cost.telegramFromId):
             dbs.removeSpending(chatId, messageId)
             dbs.commit()
             await message.delete()
@@ -40,9 +41,10 @@ class CallbacksFacade:
         messageText = message.getText()
         users = [u[1:] for u in messageText.split() if u.startswith("@")]
         await query.answer()
-        if fromUser not in users:
+        matchedUser = utils.find_username(users, fromUser)
+        if matchedUser == None:
             return
-        users.remove(fromUser)
+        users.remove(matchedUser)
         if users:
             users = "@" + " @".join(users)
             await message.edit_text(users, reply_markup=getResetMarkup())
@@ -59,7 +61,10 @@ class CallbacksFacade:
         metaInfo = spendings_handler.getSpendingMetaInfo(spending)
         await query.answer()
         fromUser = query.getUsername()
-        if metaInfo.notFilledUsers != [fromUser] and fromUser != spending.telegramFromId or metaInfo.type != SpendingType.SIMPLE:
+        notFilledUser = metaInfo.notFilledUsers[0] if metaInfo.notFilledUsers else None
+        isNotFilledUser = utils.usernames_equal(notFilledUser, fromUser)
+        isPapik = utils.usernames_equal(fromUser, spending.telegramFromId)
+        if (not isNotFilledUser and not isPapik) or metaInfo.type != SpendingType.SIMPLE:
             return
         debtors = spending.debtors
         group_id = dbs.getGroup(chatId).id
@@ -69,7 +74,7 @@ class CallbacksFacade:
             debtors = spendings_handler.getDebtorsWithAmounts(debtors, spending.costAmount)
             dbs.updateSpending(group_id, message.getReplyMessageId(), True, debtors, spending.desc)
             await message.set_reaction(constants.ReactionEmoji.FIRE)
-            if fromUser == metaInfo.notFilledUsers[0]:
+            if isNotFilledUser:
                 await message.edit_text(textLastDebtorApprove(fromUser, metaInfo.remainingAmount))
             else:
                 await message.edit_text(textLastDebtorPapikApprove(fromUser, metaInfo.notFilledUsers[0], metaInfo.remainingAmount))

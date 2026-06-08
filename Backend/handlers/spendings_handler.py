@@ -1,4 +1,5 @@
 from models.dto.spendings_dto import SpendingMetaInfo
+import utils
 from utils import BotException, BotWrongInputException
 from models.db.spending import Spending
 import services.calculations as calculations
@@ -36,12 +37,13 @@ def getSpendingMetaInfo(spending: Spending) -> SpendingMetaInfo:
 
 def getExpressionOfReply(text: str, user: str, spending: Spending) -> str:
     expression = text
+    debtor_key = utils.find_username(spending.debtors.keys(), user)
     if len(expression) > 100:
         raise BotException('🤓☝️ Внатуре задрот')
     if expression.startswith('...'):
-        if len(spending.debtors[user]) == 0:
+        if debtor_key == None or len(spending.debtors[debtor_key]) == 0:
             raise BotWrongInputException('Надо указать должников')
-        expression = spending.debtors[user] + expression[3:]
+        expression = spending.debtors[debtor_key] + expression[3:]
     calculationContext = calculations.ExpressionContext().with_total_sum(spending.costAmount)
     answer = calculations.parse_expression(expression, calculationContext)
     if answer[0] < 0 or answer[0] > spending.costAmount:
@@ -49,8 +51,10 @@ def getExpressionOfReply(text: str, user: str, spending: Spending) -> str:
     return expression
 
 def getUsersFromSpendings(spendings: list[Spending]) -> str:
-    users = {spending.telegramFromId for spending in spendings}
-    return "@" + " @".join(sorted(users)) if users else ""
+    users = {}
+    for spending in spendings:
+        users[utils.normalize_username(spending.telegramFromId)] = spending.telegramFromId
+    return "@" + " @".join([users[user] for user in sorted(users.keys())]) if users else ""
 
 def addEvenSpendingForUsers(data: parsers_handler.ParsedQuery, users: list[str]):
     # If no debtors specified, split among all users in the group
