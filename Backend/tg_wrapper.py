@@ -19,18 +19,6 @@ class TgWrapper:
         self.callbackFacade = CallbacksFacade()
 
     def startup(self):
-        """Auto restars updater on fail"""
-        while True:
-            try:
-                self._run_bot()
-            except (NetworkError, TimedOut) as e:
-                print(f"Network error: {e}. Restart in 15 seconds...", file=sys.stderr)
-            except Exception as e:
-                print(f"Critical error: {e}. Restart in 15 seconds...", file=sys.stderr)
-            finally:
-                time.sleep(15)
-
-    def _run_bot(self):
         applicationBuilder = Application.builder().token(self.config.TOKEN)
         if self.config.PROXY_URL != None:
             applicationBuilder = applicationBuilder.proxy(self.config.PROXY_URL).get_updates_proxy(self.config.PROXY_URL)
@@ -59,11 +47,7 @@ class TgWrapper:
                 webhook_url='https://kefirchik-bot.tw1.ru:8443'
             )
         else:
-            try:
-                application.run_polling(allowed_updates=Update.ALL_TYPES)
-            except (NetworkError, TimedOut) as e:
-                print(f"Polling error: {e}", file=sys.stderr)
-                raise
+            application.run_polling(allowed_updates=Update.ALL_TYPES, bootstrap_retries=-1)
 
     async def _error_handler(self, update: Update, context):
         if isinstance(context.error, (NetworkError, TimedOut)):
