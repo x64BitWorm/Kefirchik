@@ -7,6 +7,12 @@ services:
     build:
       context: ../
       dockerfile: ./Deploy/Dockerfile
+    restart: on-failure
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 10m
+        max_attempts: 3
     volumes:
       - './../Database:/var/lib/kefirchik'
     ports:
