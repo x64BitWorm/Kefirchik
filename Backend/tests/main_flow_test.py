@@ -38,6 +38,42 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
         await emu.sendMessage('alice', '/report')
         self.assertEqual('eve ➡️ alice 150🎪\nbob ➡️ alice 50🎪\n', emu.getRepliedText())
 
+    async def test_reply_saves_unbalanced_spending(self):
+        for last_share, error in (('300', 'не хватает 100'), ('500', 'лишние 100')):
+            with self.subTest(last_share=last_share):
+                emu = ChatEmu()
+
+                await emu.sendMessage('Artyom', '/add 1000\n@Filipp @Grisha @Amir')
+                emu.getRepliedText()
+
+                await emu.sendMessage('Filipp', '300', reply_id=2)
+                self.assertEqual(constants.ReactionEmoji.THUMBS_UP, emu.getReaction())
+                await emu.sendMessage('Grisha', '300', reply_id=2)
+                self.assertEqual(constants.ReactionEmoji.THUMBS_UP, emu.getReaction())
+                emu.getRepliedText()
+                await emu.sendMessage('Amir', last_share, reply_id=2)
+                self.assertEqual(constants.ReactionEmoji.THINKING_FACE, emu.getReaction())
+                self.assertEqual(f'Принято, но не сошлось: {error}', emu.getRepliedText())
+
+                await emu.sendMessage('Artyom', '/report')
+                self.assertEqual(
+                    f'@Filipp @Grisha @Amir @Artyom, в вашей трате не сошлось: {error}\n\n⚠️ Нет записанных трат',
+                    emu.getRepliedText()
+                )
+
+    async def test_add_rejects_unbalanced_spending(self):
+        for shares, error in (
+            (('@Filipp 300', '@Grisha 300', '@Amir 300'), 'Не сошлось: не хватает 100'),
+            (('@Filipp 400', '@Grisha 400', '@Amir 400'), 'Не сошлось: лишние 200'),
+        ):
+            with self.subTest(shares=shares):
+                emu = ChatEmu()
+                with self.assertRaisesRegex(utils.BotException, error):
+                    await emu.sendMessage('Artyom', '/add 1000\n' + '\n'.join(shares))
+
+                await emu.sendMessage('Artyom', '/report')
+                self.assertEqual('⚠️ Нет записанных трат', emu.getRepliedText())
+
     async def test_usernames_are_case_insensitive(self):
         emu = ChatEmu()
 

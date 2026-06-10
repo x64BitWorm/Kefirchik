@@ -1,4 +1,4 @@
-from models.dto.spendings_dto import SpendingMetaInfo
+from models.dto.spendings_dto import SpendingCompletionResult, SpendingMetaInfo
 import utils
 from utils import BotException, BotWrongInputException
 from models.db.spending import Spending
@@ -28,6 +28,15 @@ def getDebtorsWithAmounts(debtors, amount):
     for i, (k, v) in enumerate(debtors.items()):
         debtors[k] = ans[i]
     return debtors
+
+# При расхождении сохраняем введенные доли, но не закрываем трату
+def tryCompleteSpending(debtors, amount) -> SpendingCompletionResult:
+    if not isSpendingCompleted(debtors):
+        return SpendingCompletionResult(False, debtors)
+    try:
+        return SpendingCompletionResult(True, getDebtorsWithAmounts(debtors, amount))
+    except BotException as error:
+        return SpendingCompletionResult(False, debtors, str(error))
 
 def getSpendingMetaInfo(spending: Spending) -> SpendingMetaInfo:
     notFilledUsers = getUnfilledUsers(spending.debtors)

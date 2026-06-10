@@ -6,7 +6,7 @@ import random
 from collections import defaultdict
 
 from services import calculations
-from utils import normalize_username, timestamp_to_datestr
+from utils import BotException, normalize_username, timestamp_to_datestr
 from services.formatters import formatMoney
 from handlers import spendings_handler
 from models.dto.report_dto import ReportInfoDto, ReportOverviewDto, ReportTransactionDto
@@ -172,4 +172,13 @@ def getSpendingReport(spending: Spending) -> str:
 # Составить текст о незавершённой трате
 def getUncompletedWarningText(uncompletedSpending: Spending) -> str:
     unfilledUsers = spendings_handler.getUnfilledUsers(uncompletedSpending.debtors)
-    return '❗️ Есть незакрытая трата у' + ' @'.join(['']+unfilledUsers) + '\n\n'
+    if unfilledUsers:
+        return '❗️ Есть незакрытая трата у' + ' @'.join(['']+unfilledUsers) + '\n\n'
+    # Все доли заполнены, поэтому предупреждаем всех участников о расхождении
+    try:
+        calculations.calculate_spendings(uncompletedSpending.debtors.values(), uncompletedSpending.costAmount)
+    except BotException as error:
+        users = list(uncompletedSpending.debtors)
+        if normalize_username(uncompletedSpending.telegramFromId) not in map(normalize_username, users):
+            users.append(uncompletedSpending.telegramFromId)
+        return '@' + ' @'.join(users) + f', в вашей трате {str(error).lower()}\n\n'
