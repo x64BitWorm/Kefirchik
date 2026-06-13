@@ -11,6 +11,13 @@ class HandlersFacade:
     def __init__(self):
         pass
 
+    # Показываем отдельный результат, если доля принята, но баланс не сошелся
+    async def replySpendingResult(self, message: IMessage, completed: bool, error: str | None) -> None:
+        reaction = constants.ReactionEmoji.THINKING_FACE if error else constants.ReactionEmoji.FIRE if completed else constants.ReactionEmoji.THUMBS_UP
+        await message.set_reaction(reaction)
+        if error:
+            await message.reply_text(f'Принято, но {error.lower()}')
+
     async def start_command(self, message: IMessage, dbs: IDbSession) -> None:
         text, reply_markup = help_handler.getHelpTextAndMarkup()
         await message.reply_text(text, reply_markup=reply_markup)
@@ -47,19 +54,17 @@ class HandlersFacade:
 
         # это прямое дополнение траты
         if isDirectCompletion:
-            if spendings_handler.isSpendingCompleted(debtors):
+            if spending.isCompleted:
                 await message.set_reaction(constants.ReactionEmoji.SEE_NO_EVIL_MONKEY)
                 return
             expression = spendings_handler.getExpressionOfReply(message.getText(), message.getUsername(), spending)
             debtorKey = utils.find_username(debtors.keys(), message.getUsername()) or message.getUsername()
             debtors[debtorKey] = expression
-            spendingCompleted = spendings_handler.isSpendingCompleted(debtors)
-            if spendingCompleted:
-                debtors = spendings_handler.getDebtorsWithAmounts(debtors, spending.costAmount) # resolve x's
-            dbs.updateSpending(group_id, message.getReplyMessageId(), spendingCompleted, debtors, spending.desc)
-            await message.set_reaction(constants.ReactionEmoji.FIRE if spendingCompleted else constants.ReactionEmoji.THUMBS_UP)
+            result = spendings_handler.tryCompleteSpending(debtors, spending.costAmount)
+            dbs.updateSpending(group_id, message.getReplyMessageId(), result.completed, result.debtors, spending.desc)
+            await self.replySpendingResult(message, result.completed, result.error)
             metaInfo = spendings_handler.getSpendingMetaInfo(spending)
-            if not spendingCompleted and len(metaInfo.notFilledUsers) == 1 and metaInfo.type == SpendingType.SIMPLE:
+            if not result.completed and len(metaInfo.notFilledUsers) == 1 and metaInfo.type == SpendingType.SIMPLE:
                 replyMessage = message.getReplyMessage()
                 replyMessageText = textLastDebtorQuestion(metaInfo.notFilledUsers[0], metaInfo.remainingAmount)
                 await replyMessage.reply_text(replyMessageText, reply_markup=getLastDebtorApproveMarkup())
@@ -70,16 +75,14 @@ class HandlersFacade:
                 debtorKey = utils.find_username(debtors.keys(), debtor)
                 if debtorKey in spendings_handler.getUnfilledUsers(debtors):
                     debtors[debtorKey] = debt
-            spendingCompleted = spendings_handler.isSpendingCompleted(debtors)
-            if spendingCompleted:
-                debtors = spendings_handler.getDebtorsWithAmounts(debtors, spending.costAmount) # resolve x's
-            dbs.updateSpending(group_id, message.getReplyMessageId(), spendingCompleted, debtors, parsedRefilling.comment)
+            result = spendings_handler.tryCompleteSpending(debtors, spending.costAmount)
+            dbs.updateSpending(group_id, message.getReplyMessageId(), result.completed, result.debtors, parsedRefilling.comment)
             if parsedRefilling.debtors:
-                await message.set_reaction(constants.ReactionEmoji.FIRE if spendingCompleted else constants.ReactionEmoji.THUMBS_UP)
+                await self.replySpendingResult(message, result.completed, result.error)
             else:
                 await message.set_reaction(constants.ReactionEmoji.WRITING_HAND)
             metaInfo = spendings_handler.getSpendingMetaInfo(spending)
-            if not spendingCompleted and len(metaInfo.notFilledUsers) == 1 and metaInfo.type == SpendingType.SIMPLE:
+            if not result.completed and len(metaInfo.notFilledUsers) == 1 and metaInfo.type == SpendingType.SIMPLE:
                 replyMessage = message.getReplyMessage()
                 replyMessageText = textLastDebtorQuestion(metaInfo.notFilledUsers[0], metaInfo.remainingAmount)
                 await replyMessage.reply_text(replyMessageText, reply_markup=getLastDebtorApproveMarkup())

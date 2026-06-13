@@ -10,3 +10,9 @@ class SpendingMetaInfo:
         self.remainingAmount = remainingAmount
         self.xValue = xValue
         self.notFilledUsers = notFilledUsers
+
+class SpendingCompletionResult:
+    def __init__(self, completed: bool, debtors: dict, error: str | None = None):
+        self.completed = completed
+        self.debtors = debtors
+        self.error = error
