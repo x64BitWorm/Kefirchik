@@ -136,6 +136,26 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
         await emu.sendMessage('eve', '/report')
         self.assertEqual('eve ➡️ bob 200🎪\nalice ➡️ bob 180🎪\n', emu.getRepliedText())
 
+    async def test_reply_add_debt_with_ellipsis(self):
+        emu = ChatEmu()
+
+        await emu.sendMessage('bob', '/add 500\n@alice 30\n@eve @bob')
+        self.assertEqual('Запомнил🍶 ждем  @eve @bob', emu.getRepliedText())
+
+        await emu.sendMessage('eve', '200', reply_id=2)
+        self.assertEqual(constants.ReactionEmoji.THUMBS_UP, emu.getReaction())
+        self.assertEqual('@bob должен 270?', emu.getRepliedText()) # игнорим
+
+        await emu.sendMessage('alice', '…+150', reply_id=2)
+        self.assertEqual(constants.ReactionEmoji.THUMBS_UP, emu.getReaction())
+        self.assertEqual('@bob должен 120?', emu.getRepliedText()) # игнорим
+
+        await emu.sendMessage('bob', 'x', reply_id=2)
+        self.assertEqual(constants.ReactionEmoji.FIRE, emu.getReaction())
+
+        await emu.sendMessage('eve', '/report')
+        self.assertEqual('eve ➡️ bob 200🎪\nalice ➡️ bob 180🎪\n', emu.getRepliedText())
+
     async def test_reply_comment(self):
         emu = ChatEmu()
 

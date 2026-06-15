@@ -49,10 +49,11 @@ def getExpressionOfReply(text: str, user: str, spending: Spending) -> str:
     debtor_key = utils.find_username(spending.debtors.keys(), user)
     if len(expression) > 100:
         raise BotException('🤓☝️ Внатуре задрот')
-    if expression.startswith('...'):
+    continuation_prefix = '...' if expression.startswith('...') else '…' if expression.startswith('…') else None
+    if continuation_prefix:
         if debtor_key == None or len(spending.debtors[debtor_key]) == 0:
             raise BotWrongInputException('Надо указать должников')
-        expression = spending.debtors[debtor_key] + expression[3:]
+        expression = spending.debtors[debtor_key] + expression[len(continuation_prefix):]
     calculationContext = calculations.ExpressionContext().with_total_sum(spending.costAmount)
     answer = calculations.parse_expression(expression, calculationContext)
     if answer[0] < 0 or answer[0] > spending.costAmount:
