@@ -10,7 +10,7 @@ MONEY_ACCURACY = 5
 
 opening_brackets = "([{<"
 closing_brackets = ")]}>"
-operation_priorities = {"-" : 1, "+": 1, "*": 2, "/": 3}
+operation_priorities = {"-" : 1, "+": 1, "*": 2, "×": 2, "⋅": 2, "/": 3, "÷": 3, ":": 3}
 
 class ExpressionContext:
   def __init__(self):
@@ -72,12 +72,12 @@ def calculate_operation(left_value, op, right_value):
     return (left_value[0] + right_value[0], left_value[1] + right_value[1])
   elif op == '-':
     return (left_value[0] - right_value[0], left_value[1] - right_value[1])
-  elif op == '*':
+  elif op in ('*', '×', '⋅'):
     if (left_value[1] != 0) and (right_value[1] != 0):
       raise Exception("Cannot multiply two variables x.")
     # (1 + x1) * (2 + x2) = 1 * 2   +    1 * x2 + 2 * x1
     return (left_value[0] * right_value[0], left_value[0] * right_value[1] + right_value[0] * left_value[1])
-  elif op == '/':
+  elif op in ('/', '÷', ':'):
     if (right_value[1] != 0):
       raise Exception("Attempt of division by variable x.")
     if (right_value[0] == 0):

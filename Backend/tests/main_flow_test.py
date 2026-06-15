@@ -25,6 +25,15 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
         await emu.sendMessage('alice', '/report')
         self.assertEqual('bob ➡️ alice 4🎪\n', emu.getRepliedText())
 
+    async def test_add_spending_with_alternative_math_operators(self):
+        emu = ChatEmu()
+
+        await emu.sendMessage('alice', '/add 2×100 + 100⋅2\n@bob 1200÷3 + 0:2\ntea')
+        self.assertEqual('Запомнил🍶', emu.getRepliedText())
+
+        await emu.sendMessage('alice', '/report')
+        self.assertEqual('bob ➡️ alice 400🎪\n', emu.getRepliedText())
+
 
     async def test_reply_spending(self):
         emu = ChatEmu()
