@@ -36,3 +36,9 @@ def usernames_equal(left: str | None, right: str | None) -> bool:
 
 def find_username(usernames, target: str) -> str | None:
     return next((username for username in usernames if usernames_equal(username, target)), None)
+
+def get_continuation_prefix(text: str) -> str | None:
+    for prefix in ('...', '…'):
+        if text.startswith(prefix):
+            return prefix
+    return None
