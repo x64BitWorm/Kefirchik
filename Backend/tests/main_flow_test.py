@@ -34,6 +34,24 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
         await emu.sendMessage('alice', '/report')
         self.assertEqual('bob ➡️ alice 400🎪\n', emu.getRepliedText())
 
+    async def test_add_spending_sums_repeated_debtor_shares(self):
+        emu = ChatEmu()
+
+        await emu.sendMessage('alice', '/add 1000\n@alex 100\n@я x\n@alex 200')
+        self.assertEqual('Запомнил🍶', emu.getRepliedText())
+
+        await emu.sendMessage('alice', '/report')
+        self.assertEqual('alex ➡️ alice 300🎪\n', emu.getRepliedText())
+
+    async def test_add_spending_sums_repeated_debtor_group_share(self):
+        emu = ChatEmu()
+
+        await emu.sendMessage('alice', '/add 1000\n@alex @я 200*1.5\n@alex 400')
+        self.assertEqual('Запомнил🍶', emu.getRepliedText())
+
+        await emu.sendMessage('alice', '/report')
+        self.assertEqual('alex ➡️ alice 700🎪\n', emu.getRepliedText())
+
 
     async def test_reply_spending(self):
         emu = ChatEmu()
