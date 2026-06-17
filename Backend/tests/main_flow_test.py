@@ -25,6 +25,33 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
         await emu.sendMessage('alice', '/report')
         self.assertEqual('bob ➡️ alice 4🎪\n', emu.getRepliedText())
 
+    async def test_add_spending_with_alternative_math_operators(self):
+        emu = ChatEmu()
+
+        await emu.sendMessage('alice', '/add 2×100 + 100⋅2\n@bob 1200÷3 + 0:2\ntea')
+        self.assertEqual('Запомнил🍶', emu.getRepliedText())
+
+        await emu.sendMessage('alice', '/report')
+        self.assertEqual('bob ➡️ alice 400🎪\n', emu.getRepliedText())
+
+    async def test_add_spending_sums_repeated_debtor_shares(self):
+        emu = ChatEmu()
+
+        await emu.sendMessage('alice', '/add 1000\n@alex 100\n@я x\n@alex 200')
+        self.assertEqual('Запомнил🍶', emu.getRepliedText())
+
+        await emu.sendMessage('alice', '/report')
+        self.assertEqual('alex ➡️ alice 300🎪\n', emu.getRepliedText())
+
+    async def test_add_spending_sums_repeated_debtor_group_share(self):
+        emu = ChatEmu()
+
+        await emu.sendMessage('alice', '/add 1000\n@alex @я 200*1.5\n@alex 400')
+        self.assertEqual('Запомнил🍶', emu.getRepliedText())
+
+        await emu.sendMessage('alice', '/report')
+        self.assertEqual('alex ➡️ alice 700🎪\n', emu.getRepliedText())
+
 
     async def test_reply_spending(self):
         emu = ChatEmu()
@@ -128,6 +155,26 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
 
         await emu.sendMessage('alice', '...+150', reply_id=2)
         self.assertEqual(constants.ReactionEmoji.THUMBS_UP, emu.getReaction())    
+        self.assertEqual('@bob должен 120?', emu.getRepliedText()) # игнорим
+
+        await emu.sendMessage('bob', 'x', reply_id=2)
+        self.assertEqual(constants.ReactionEmoji.FIRE, emu.getReaction())
+
+        await emu.sendMessage('eve', '/report')
+        self.assertEqual('eve ➡️ bob 200🎪\nalice ➡️ bob 180🎪\n', emu.getRepliedText())
+
+    async def test_reply_add_debt_with_ellipsis(self):
+        emu = ChatEmu()
+
+        await emu.sendMessage('bob', '/add 500\n@alice 30\n@eve @bob')
+        self.assertEqual('Запомнил🍶 ждем  @eve @bob', emu.getRepliedText())
+
+        await emu.sendMessage('eve', '200', reply_id=2)
+        self.assertEqual(constants.ReactionEmoji.THUMBS_UP, emu.getReaction())
+        self.assertEqual('@bob должен 270?', emu.getRepliedText()) # игнорим
+
+        await emu.sendMessage('alice', '…+150', reply_id=2)
+        self.assertEqual(constants.ReactionEmoji.THUMBS_UP, emu.getReaction())
         self.assertEqual('@bob должен 120?', emu.getRepliedText()) # игнорим
 
         await emu.sendMessage('bob', 'x', reply_id=2)
@@ -460,6 +507,12 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
         
         with self.assertRaisesRegex(utils.BotWrongInputException, 'Не указаны должники'):
             await emu.sendMessage('alice', '/add 300')
+    
+    async def test_spending_adding_wrong_input_errors(self):
+        emu = ChatEmu()
+
+        with self.assertRaisesRegex(utils.BotWrongInputException, "Значение должно быть числом или переменной. Сейчас - '300x'"):
+            await emu.sendMessage('alice', '/add 500\n@bob 200*x\n@alice 300 x')
 
 if __name__ == "__main__":
     unittest.main()
