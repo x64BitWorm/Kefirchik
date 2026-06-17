@@ -507,6 +507,12 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
         
         with self.assertRaisesRegex(utils.BotWrongInputException, 'Не указаны должники'):
             await emu.sendMessage('alice', '/add 300')
+    
+    async def test_spending_adding_wrong_input_errors(self):
+        emu = ChatEmu()
+
+        with self.assertRaisesRegex(utils.BotWrongInputException, "Значение должно быть числом или переменной. Сейчас - '300x'"):
+            await emu.sendMessage('alice', '/add 500\n@bob 200*x\n@alice 300 x')
 
 if __name__ == "__main__":
     unittest.main()

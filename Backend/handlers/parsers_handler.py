@@ -54,7 +54,7 @@ def parseSpendingBody(from_username: str, text: str) -> ParsedSpendingBody:
                         user = from_username
                     existing_user = utils.find_username(debtors.keys(), user)
                     if existing_user != None and debtors[existing_user] and expr:
-                        expr = f'0+({debtors[existing_user]})+({expr})'
+                        expr = f'({debtors[existing_user]})+({expr})'
                     if existing_user != None:
                         del debtors[existing_user]
                     debtors[user] = expr

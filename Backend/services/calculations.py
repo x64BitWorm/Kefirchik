@@ -46,26 +46,35 @@ def get_split_index(expr: str):
   priorities = get_operation_priorities(expr)
   return get_lowest_priority_index(priorities)
 
+def find_brace_end(expr: str, fromPos: int) -> int:
+  count = 1
+  for i in range(fromPos, len(expr)):
+    match expr[i]:
+      case '(':
+        count += 1
+      case ')':
+        count -= 1
+        if count == 0:
+          return i
+  return -1
+
 def trim_expr(expr: str):
-  while True:
-    expr1 = re.sub(r"^\s*\((.*)\)\s*$", r"\1", expr).strip()
-    if (expr1 == expr):
-      return expr
-    else:
-      expr = expr1
+  while len(expr) > 1 and expr[0] == '(' and expr[-1] == ')' and find_brace_end(expr, 1) == len(expr) - 1:
+    expr = expr[1:-1]
+  return expr
 
 def calculate_token(expr, context: ExpressionContext):
   if expr == 'x':
     return (0, 1)
   elif expr == 's':
     if context.total_sum == None:
-      raise BotException(f"Так нельзя использовать переменную s")
+      raise Exception(f"Так нельзя использовать переменную s")
     return (context.total_sum, 0)
   else:
     try:
       return (float(expr), 0)
     except ValueError:
-      raise Exception("Value is neither x nor number.")
+      raise Exception(f"Значение должно быть числом или переменной. Сейчас - '{expr}'")
 
 def calculate_operation(left_value, op, right_value):
   if op == '+':
@@ -74,17 +83,17 @@ def calculate_operation(left_value, op, right_value):
     return (left_value[0] - right_value[0], left_value[1] - right_value[1])
   elif op in ('*', '×', '⋅'):
     if (left_value[1] != 0) and (right_value[1] != 0):
-      raise Exception("Cannot multiply two variables x.")
+      raise Exception("Нельзя умножать x на x")
     # (1 + x1) * (2 + x2) = 1 * 2   +    1 * x2 + 2 * x1
     return (left_value[0] * right_value[0], left_value[0] * right_value[1] + right_value[0] * left_value[1])
   elif op in ('/', '÷', ':'):
     if (right_value[1] != 0):
-      raise Exception("Attempt of division by variable x.")
+      raise Exception("Попытка деления на x")
     if (right_value[0] == 0):
-      raise Exception("Attempt of division by 0.")
+      raise Exception("Попытка деления на ноль")
     return (left_value[0] / right_value[0], left_value[1] / right_value[0])
   else:
-    raise Exception("Unsupported operation encountered.")
+    raise Exception(f"Неподдерживаемая операция '{op}'")
 
 def calculate(expr: str, context: ExpressionContext):
   expr = trim_expr(expr)
@@ -113,10 +122,10 @@ def validate_brackets(expr: str):
       stack.put(opening_brackets.index(c))
     elif (c in closing_brackets):
       if stack.empty() or closing_brackets.index(c) != stack.get():
-        raise Exception("Invalid brackets consequence.")
+        raise Exception("Неверная последовательность скобок")
 
   if not stack.empty():
-    raise Exception("Invalid brackets consequence.")
+    raise Exception("Неверная последовательность скобок")
 
 def validate_expression(expr: str):
   validate_brackets(expr)
@@ -131,8 +140,8 @@ def calculate_spendings(expressions, total_sum) -> list[float]:
   context = ExpressionContext().with_total_sum(total_sum)
   try:
     expressions_values = list(map(lambda expr: parse_expression(expr, context), expressions))
-  except:
-    raise utils.BotWrongInputException('Некорректная сумма у должника, правильный пример - <code>100 + x</code>')
+  except Exception as e:
+    raise utils.BotWrongInputException(f'Некорректная сумма у должника, правильный пример - <code>100 + x</code>\n<b>{str(e)}</b>')
   expressions_sum = [sum(i) for i in zip(*expressions_values)]
   # a * x + b = total_sum
   a_total = expressions_sum[1]
