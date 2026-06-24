@@ -21,7 +21,7 @@ POLLING_WATCHDOG_TIMEOUT = 90
 
 class PollingTracker:
     def __init__(self):
-        self.last_success = time.monotonic()
+        self.request_started_at = None
 
 
 class TrackedExtBot(ExtBot):
@@ -32,9 +32,11 @@ class TrackedExtBot(ExtBot):
         object.__setattr__(self, "polling_tracker", polling_tracker)
 
     async def get_updates(self, *args, **kwargs):
-        updates = await super().get_updates(*args, **kwargs)
-        self.polling_tracker.last_success = time.monotonic()
-        return updates
+        self.polling_tracker.request_started_at = time.monotonic()
+        try:
+            return await super().get_updates(*args, **kwargs)
+        finally:
+            self.polling_tracker.request_started_at = None
 
 
 class TgWrapper:
@@ -106,7 +108,6 @@ class TgWrapper:
             logger.error("Unhandled Telegram error", exc_info=exceptionInfo)
 
     async def _start_polling_watchdog(self, application):
-        self.pollingTracker.last_success = time.monotonic()
         self.pollingWatchdogTask = asyncio.create_task(
             self._polling_watchdog(application),
             name="telegram-polling-watchdog",
@@ -122,7 +123,10 @@ class TgWrapper:
     async def _polling_watchdog(self, application):
         while True:
             await asyncio.sleep(10)
-            stalledFor = time.monotonic() - self.pollingTracker.last_success
+            requestStartedAt = self.pollingTracker.request_started_at
+            if requestStartedAt == None:
+                continue
+            stalledFor = time.monotonic() - requestStartedAt
             if stalledFor <= POLLING_WATCHDOG_TIMEOUT:
                 continue
             logger.critical(
