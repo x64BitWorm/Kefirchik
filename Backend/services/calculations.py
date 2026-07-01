@@ -4,12 +4,13 @@ import utils
 from services.formatters import formatMoney
 from models.dto.spendings_dto import SpendingType
 from utils import BotException
+import re
 
 MONEY_ACCURACY = 5
 
 opening_brackets = "([{<"
 closing_brackets = ")]}>"
-operation_priorities = {"-" : 1, "+": 1, "*": 2, "×": 2, "⋅": 2, "/": 3, "÷": 3, ":": 3}
+operation_priorities = {"-" : 1, "+": 1, "*": 2, "×": 2, "⋅": 2, "/": 3, "÷": 3}
 
 class ExpressionContext:
   def __init__(self):
@@ -71,9 +72,12 @@ def calculate_token(expr, context: ExpressionContext):
     return (context.total_sum, 0)
   else:
     try:
+      time_match = re.match(r"^(\d?\d):(\d\d)$", expr)
+      if time_match:
+        return (float(time_match.group(1))*60+float(time_match.group(2)), 0)
       return (float(expr), 0)
     except ValueError:
-      raise Exception(f"Значение должно быть числом или переменной. Сейчас - '{expr}'")
+      raise Exception(f"Значение должно быть числом, переменной или временем. Сейчас - '{expr}'")
 
 def calculate_operation(left_value, op, right_value):
   if op == '+':
