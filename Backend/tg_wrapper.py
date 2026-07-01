@@ -87,7 +87,7 @@ class TgWrapper:
     async def _start_webhook(self):
         try:
             await self.bot.set_webhook(
-                url="https://kefirchik-bot.tw1.ru:8443/webhook",
+                url="https://kefirchik-bot.tw1.ru:8443/",
                 secret_token='ASecretTokenIHaveChangedByNow',
                 allowed_updates=self.dp.resolve_used_update_types(),
             )
@@ -97,7 +97,7 @@ class TgWrapper:
                 bot=self.bot,
                 secret_token='ASecretTokenIHaveChangedByNow',
             )
-            webhook_requests_handler.register(app, path='/webhook')
+            webhook_requests_handler.register(app, path='/')
             setup_application(app, self.dp, bot=self.bot)
 
             ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
