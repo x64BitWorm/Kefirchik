@@ -11,6 +11,7 @@ from services.formatters import formatMoney
 from handlers import spendings_handler
 from models.dto.report_dto import ReportInfoDto, ReportOverviewDto, ReportTransactionDto
 from models.db.spending import Spending
+from aiogram.types import BufferedInputFile
 
 # Возвращает случайную из незавершенных трат
 def getUncompletedSpending(spendings: list[Spending]) -> Spending | None:
@@ -75,7 +76,7 @@ def calculateTransactions(balances: dict[str, float]) -> list[ReportTransactionD
     return transactions
 
 # Сгенерить csv по всем завершённым тратам
-def generateCsv(spendings: list[Spending]) -> io.StringIO:
+def generateCsv(spendings: list[Spending]) -> BufferedInputFile:
     overview = generateReport(spendings)
     output = io.StringIO()
     writer = csv.writer(output)
@@ -116,10 +117,10 @@ def generateCsv(spendings: list[Spending]) -> io.StringIO:
         ])
 
     csv_content = output.getvalue()
-    final_io = io.StringIO("\ufeff" + csv_content)
-    final_io.name = f"Отчёт_{date.today():%Y-%m-%d}.csv"
-    final_io.seek(0)
-    return final_io
+    return BufferedInputFile(
+        file=b"\xef\xbb\xbf" + csv_content.encode("utf-8"), 
+        filename=f"Отчёт_{date.today():%Y-%m-%d}.csv"
+    )
 
 # Составить вывод о транзакциях
 def getReportInfo(spendings: list[Spending]) -> ReportInfoDto:

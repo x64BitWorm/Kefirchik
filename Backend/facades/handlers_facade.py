@@ -3,7 +3,7 @@ from models.bot_api.bot_api_interfaces import IMessage
 from services.constants import textLastDebtorQuestion
 from services.telegram_markups import getCancelMarkup, getCsvReportMarkup, getLastDebtorApproveMarkup, getResetMarkup
 from handlers import reports_handler, parsers_handler, spendings_handler, help_handler
-from telegram import constants
+from models.bot_api.reactions import ReactionEmoji
 from database import IDbSession
 import utils
 
@@ -13,7 +13,7 @@ class HandlersFacade:
 
     # Показываем отдельный результат, если доля принята, но баланс не сошелся
     async def replySpendingResult(self, message: IMessage, completed: bool, error: str | None) -> None:
-        reaction = constants.ReactionEmoji.THINKING_FACE if error else constants.ReactionEmoji.FIRE if completed else constants.ReactionEmoji.THUMBS_UP
+        reaction = ReactionEmoji.THINKING_FACE if error else ReactionEmoji.FIRE if completed else ReactionEmoji.THUMBS_UP
         await message.set_reaction(reaction)
         if error:
             await message.reply_text(f'Принято, но {error.lower()}')
@@ -55,7 +55,7 @@ class HandlersFacade:
         # это прямое дополнение траты
         if isDirectCompletion:
             if spending.isCompleted:
-                await message.set_reaction(constants.ReactionEmoji.SEE_NO_EVIL_MONKEY)
+                await message.set_reaction(ReactionEmoji.SEE_NO_EVIL_MONKEY)
                 return
             expression = spendings_handler.getExpressionOfReply(message.getText(), message.getUsername(), spending)
             debtorKey = utils.find_username(debtors.keys(), message.getUsername()) or message.getUsername()
@@ -80,7 +80,7 @@ class HandlersFacade:
             if parsedRefilling.debtors:
                 await self.replySpendingResult(message, result.completed, result.error)
             else:
-                await message.set_reaction(constants.ReactionEmoji.WRITING_HAND)
+                await message.set_reaction(ReactionEmoji.WRITING_HAND)
             metaInfo = spendings_handler.getSpendingMetaInfo(spending)
             if not result.completed and len(metaInfo.notFilledUsers) == 1 and metaInfo.type == SpendingType.SIMPLE:
                 replyMessage = message.getReplyMessage()
