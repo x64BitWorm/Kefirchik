@@ -9,7 +9,7 @@ from services import calculations
 from utils import BotException, normalize_username, timestamp_to_datestr
 from services.formatters import formatMoney
 from handlers import spendings_handler
-from models.dto.report_dto import ReportInfoDto, ReportOverviewDto, ReportTransactionDto
+from models.dto.report_dto import ReportFileDto, ReportInfoDto, ReportOverviewDto, ReportTransactionDto
 from models.db.spending import Spending
 
 # Возвращает случайную из незавершенных трат
@@ -75,7 +75,7 @@ def calculateTransactions(balances: dict[str, float]) -> list[ReportTransactionD
     return transactions
 
 # Сгенерить csv по всем завершённым тратам
-def generateCsv(spendings: list[Spending]) -> io.StringIO:
+def generateCsv(spendings: list[Spending]) -> ReportFileDto:
     overview = generateReport(spendings)
     output = io.StringIO()
     writer = csv.writer(output)
@@ -89,7 +89,7 @@ def generateCsv(spendings: list[Spending]) -> io.StringIO:
     ]
     for _, col2, col3, data in summary_rows:
         row = ["", col2, col3] + [
-            formatMoney(data[name]) if name in data else "" 
+            formatMoney(data[name]) if name in data else ""
             for name in names
         ]
         writer.writerow(row)
@@ -116,10 +116,10 @@ def generateCsv(spendings: list[Spending]) -> io.StringIO:
         ])
 
     csv_content = output.getvalue()
-    final_io = io.StringIO("\ufeff" + csv_content)
-    final_io.name = f"Отчёт_{date.today():%Y-%m-%d}.csv"
-    final_io.seek(0)
-    return final_io
+    return ReportFileDto(
+        file=b"\xef\xbb\xbf" + csv_content.encode("utf-8"),
+        filename=f"Отчёт_{date.today():%Y-%m-%d}.csv"
+    )
 
 # Составить вывод о транзакциях
 def getReportInfo(spendings: list[Spending]) -> ReportInfoDto:

@@ -7,7 +7,7 @@ DROP TABLE costs;
 
 CREATE TABLE costs (
     messageId      NUMERIC (8) NOT NULL,
-    groupId        INTEGER     REFERENCES groups (id) 
+    groupId        INTEGER     REFERENCES groups (id)
                                NOT NULL,
     isCompleted    INTEGER (1) NOT NULL,
     telegramFromId TEXT        NOT NULL,

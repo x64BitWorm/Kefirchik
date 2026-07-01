@@ -1,14 +1,14 @@
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 def getCsvReportMarkup():
-    return InlineKeyboardMarkup([[InlineKeyboardButton('Отчет.csv', callback_data="report-csv")]])
+    return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text='Отчет.csv', callback_data="report-csv")]])
 
 def getResetMarkup():
-    return InlineKeyboardMarkup([[InlineKeyboardButton('Подтверждаю сброс', callback_data='reset-costs')]])
+    return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text='Подтверждаю сброс', callback_data='reset-costs')]])
 
 def getCancelMarkup():
-    return InlineKeyboardMarkup([[InlineKeyboardButton('Отмена', callback_data='cancel-send')]])
+    return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text='Отмена', callback_data='cancel-send')]])
 
 def getLastDebtorApproveMarkup():
-    return InlineKeyboardMarkup([[InlineKeyboardButton('Да', callback_data="last-debtor-approve/yes"),
-                                  InlineKeyboardButton('Нет', callback_data="last-debtor-approve/no")]])
+    return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text='Да', callback_data="last-debtor-approve/yes"),
+                                  InlineKeyboardButton(text='Нет', callback_data="last-debtor-approve/no")]])

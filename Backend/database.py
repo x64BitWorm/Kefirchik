@@ -4,7 +4,7 @@ from datetime import datetime
 import pathlib
 from typing import Any
 import sqlalchemy as sa
-from sqlalchemy import func, text
+from sqlalchemy import func
 from sqlalchemy.orm import sessionmaker, Session
 
 import utils
@@ -54,16 +54,16 @@ class IDbSession:
 class DbSession(IDbSession):
     def __init__(self, session: Session):
         super().__init__(session)
-    
+
     def close(self):
         self.u.close()
-    
+
     def commit(self):
         self.u.commit()
-    
+
     def rollback(self):
         self.u.rollback()
-    
+
     def getGroup(self, id: int) -> Group:
         group = self.u.query(Group).filter(
             Group.id == id,
@@ -134,7 +134,7 @@ class DbManager:
             dbpath,
             echo=False,
         )
-    
+
     def applyMigrations(self, showLogs = True):
         """Applies all pending migrations to current engine"""
         Migration.__table__.create(self.main_engine, checkfirst=True)
@@ -163,7 +163,7 @@ class DbManager:
                     dbs.commit()
         finally:
             dbs.close()
-    
+
     def newSession(self) -> DbSession:
         """Creates new isolated session"""
         DBSession = sessionmaker(

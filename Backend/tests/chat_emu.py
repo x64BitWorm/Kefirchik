@@ -47,7 +47,7 @@ class ChatEmu:
                 await self.callbackFacade.last_debtor_approve_callback(msg, dbs)
         finally:
             dbs.close()
-        
+
 
     def getRepliedText(self) -> str | None:
         reply = self.ctx.msgQueue.popleft()

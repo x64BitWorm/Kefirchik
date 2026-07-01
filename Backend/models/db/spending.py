@@ -21,7 +21,7 @@ class Spending(Base):
         if self._debtors:
             return json.loads(self._debtors)
         return {}
-    
+
     @debtors.setter
     def debtors(self, value: dict[str, Any]):
         self._debtors = json.dumps(value)

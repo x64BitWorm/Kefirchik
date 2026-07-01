@@ -1,2 +1,2 @@
-python-telegram-bot[webhooks]==22.7
+aiogram[proxy]==3.29.0
 SQLAlchemy==2.0.50

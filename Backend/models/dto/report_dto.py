@@ -15,3 +15,9 @@ class ReportInfoDto:
     def __init__(self, transactions_count: int, text: str):
         self.transactions_count = transactions_count
         self.text = text
+
+
+class ReportFileDto:
+    def __init__(self, file: bytes, filename: str):
+        self.file = file
+        self.filename = filename

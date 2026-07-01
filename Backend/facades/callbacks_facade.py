@@ -1,17 +1,16 @@
-import json
 from services.constants import textLastDebtorApprove, textLastDebtorPapikApprove
 from models.dto.spendings_dto import SpendingType
 from services.telegram_markups import getResetMarkup
 from handlers import reports_handler, spendings_handler
 from database import IDbSession
 from models.bot_api.bot_api_interfaces import IMessage
-from telegram import constants
+from models.bot_api.reactions import ReactionEmoji
 import utils
 
 class CallbacksFacade:
     def __init__(self):
         pass
-    
+
     async def report_csv_callback(self, message: IMessage, dbs: IDbSession) -> None:
         query = message.getCallbackQuery()
         message = query.getMessage()
@@ -73,7 +72,7 @@ class CallbacksFacade:
             debtors[metaInfo.notFilledUsers[0]] = str(metaInfo.remainingAmount)
             debtors = spendings_handler.getDebtorsWithAmounts(debtors, spending.costAmount)
             dbs.updateSpending(group_id, message.getReplyMessageId(), True, debtors, spending.desc)
-            await message.set_reaction(constants.ReactionEmoji.FIRE)
+            await message.set_reaction(ReactionEmoji.FIRE)
             if isNotFilledUser:
                 await message.edit_text(textLastDebtorApprove(fromUser, metaInfo.remainingAmount))
             else:
