@@ -25,11 +25,11 @@ class HandlersFacade:
     async def add_command(self, message: IMessage, dbs: IDbSession) -> None:
         text = message.getCaption() if message.isPhoto() else message.getText()
         data = parsers_handler.ParsedQuery(text, message.getUsername())
-        
+
         # If no debtors specified, split among all users in the group
         if not data.debtors:
             spendings_handler.addEvenSpendingForUsers(data, dbs.getAllUsers(message.getChatId()))
-        
+
         reply_text = spendings_handler.getReplyText(data)
         spendingCompleted = spendings_handler.isSpendingCompleted(data.debtors)
         debtors = spendings_handler.getDebtorsWithAmounts(data.debtors, data.amount) if spendingCompleted else data.debtors
@@ -42,7 +42,7 @@ class HandlersFacade:
         spending = dbs.getSpending(group_id, message.getReplyMessageId())
         if spending is None:
             return
-        
+
         isDirectCompletion = True
         # папик хочет обновить коммент или дозаполнить трату за должников?
         if utils.usernames_equal(spending.telegramFromId, message.getUsername()):

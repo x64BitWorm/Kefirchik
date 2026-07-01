@@ -15,7 +15,7 @@ class ChatContext:
         self.messages: dict[int, IMessage] = dict()
         self.chat_id = random.randint(100, 999)
         self.last_msg_id = 1
-    
+
     def createChat(self):
         dbs = self.db.newSession()
         dbs.getGroup(self.chat_id)

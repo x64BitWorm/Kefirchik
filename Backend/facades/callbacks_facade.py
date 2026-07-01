@@ -1,4 +1,3 @@
-import json
 from services.constants import textLastDebtorApprove, textLastDebtorPapikApprove
 from models.dto.spendings_dto import SpendingType
 from services.telegram_markups import getResetMarkup
@@ -11,7 +10,7 @@ import utils
 class CallbacksFacade:
     def __init__(self):
         pass
-    
+
     async def report_csv_callback(self, message: IMessage, dbs: IDbSession) -> None:
         query = message.getCallbackQuery()
         message = query.getMessage()

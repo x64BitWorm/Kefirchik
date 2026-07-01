@@ -2,7 +2,6 @@ import utils
 from chat_emu import ChatEmu
 import unittest
 from models.bot_api.reactions import ReactionEmoji as constants
-import asyncio
 
 class TestSpendings(unittest.IsolatedAsyncioTestCase):
 
@@ -11,7 +10,7 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
 
         await emu.sendMessage('alice', '/add 200.5\n@bob 200.5\ntea')
         self.assertEqual('Запомнил🍶', emu.getRepliedText())
-        
+
         await emu.sendMessage('alice', '/report')
         self.assertEqual('bob ➡️ alice 200.5🎪\n', emu.getRepliedText())
 
@@ -21,7 +20,7 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
 
         await emu.sendMessage('alice', '/add 2 +\t\xA0 2\n@bob 1+  1     + 1   +1\ntea')
         self.assertEqual('Запомнил🍶', emu.getRepliedText())
-        
+
         await emu.sendMessage('alice', '/report')
         self.assertEqual('bob ➡️ alice 4🎪\n', emu.getRepliedText())
 
@@ -150,11 +149,11 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
         self.assertEqual('Запомнил🍶 ждем  @eve @bob', emu.getRepliedText())
 
         await emu.sendMessage('eve', '200', reply_id=2)
-        self.assertEqual(constants.THUMBS_UP, emu.getReaction())    
+        self.assertEqual(constants.THUMBS_UP, emu.getReaction())
         self.assertEqual('@bob должен 270?', emu.getRepliedText()) # игнорим
 
         await emu.sendMessage('alice', '...+150', reply_id=2)
-        self.assertEqual(constants.THUMBS_UP, emu.getReaction())    
+        self.assertEqual(constants.THUMBS_UP, emu.getReaction())
         self.assertEqual('@bob должен 120?', emu.getRepliedText()) # игнорим
 
         await emu.sendMessage('bob', 'x', reply_id=2)
@@ -194,7 +193,7 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
         else: self.fail('Expected exception not raised')
 
         await emu.sendMessage('eve', '200', reply_id=2)
-        self.assertEqual(constants.FIRE, emu.getReaction())    
+        self.assertEqual(constants.FIRE, emu.getReaction())
 
         await emu.sendMessage('bob', 'da eto borga', reply_id=2)
         self.assertEqual(constants.WRITING_HAND, emu.getReaction())
@@ -226,16 +225,16 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
 
         await emu.pressButton('alice', 'cancel-send', msg_id=2) # Press button on 2 message in chat
         self.assertTrue(emu.messageDeleted())
-        
+
         await emu.sendMessage('alice', '/report')
         self.assertEqual('⚠️ Нет записанных трат', emu.getRepliedText())
-    
+
     async def test_uncompleted_report(self):
         emu = ChatEmu()
 
         await emu.sendMessage('bob', '/add 200\n@alice 200\ntea')
         self.assertEqual('Запомнил🍶', emu.getRepliedText())
-        
+
         await emu.sendMessage('alice', '/report')
         self.assertEqual('alice ➡️ bob 200🎪\n', emu.getRepliedText())
 
@@ -265,10 +264,10 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
 
         await emu.sendMessage('bob', '/add 200\n@alice @eve\ntea')
         self.assertEqual('Запомнил🍶 ждем  @alice @eve', emu.getRepliedText())
-        
+
         await emu.sendMessage('alice', '/add 100\n@eve @bob\nkefir')
         self.assertEqual('Запомнил🍶 ждем  @eve @bob', emu.getRepliedText())
-        
+
         await emu.sendMessage('bob', '/report')
         replied_text = emu.getRepliedText()
         self.assertTrue(any(
@@ -342,7 +341,7 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
 
         await emu.pressButton('alex', 'last-debtor-approve/yes', msg_id=10) # Press button on 4 message in chat
         self.assertEqual(constants.FIRE, emu.getReaction())
-        self.assertEqual('@alex согласился взять остаток -20', emu.getEditedText())        
+        self.assertEqual('@alex согласился взять остаток -20', emu.getEditedText())
 
     async def test_last_debtor_papik_approve(self):
         emu = ChatEmu()
@@ -370,7 +369,7 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
 
         await emu.pressButton('alice', 'last-debtor-approve/yes', msg_id=10) # Press button on 4 message in chat
         self.assertEqual(constants.FIRE, emu.getReaction())
-        self.assertEqual('@alice определил долю @alex в -20', emu.getEditedText())        
+        self.assertEqual('@alice определил долю @alex в -20', emu.getEditedText())
 
     async def test_approve_negative_debt(self):
         emu = ChatEmu()
@@ -383,7 +382,7 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
 
         await emu.sendMessage('eve', '50', reply_id=2)
         self.assertEqual(constants.THUMBS_UP, emu.getReaction())
-        
+
         self.assertEqual('@alex должен -10?', emu.getRepliedText())
         await emu.pressButton('alex', 'last-debtor-approve/yes', msg_id=5)
 
@@ -392,7 +391,7 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
 
         await emu.sendMessage('alice', '/report')
         self.assertEqual('bob ➡️ alice 60🎪\neve ➡️ alice 40🎪\neve ➡️ alex 10🎪\n', emu.getRepliedText())
-    
+
 
     async def test_approve_zero_debt(self):
         emu = ChatEmu()
@@ -439,7 +438,7 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
             self.fail(f"Unexpected exception raised: {e}")
         else:
             self.fail("Expected IndexError, but no exception was raised")
-        
+
         await emu.pressButton('alice', 'reset-costs', msg_id=8)
         self.assertEqual('@bob', emu.getEditedText())
 
@@ -458,7 +457,7 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
 
         await emu.sendMessage('eve', '/report')
         self.assertEqual('⚠️ Нет записанных трат', emu.getRepliedText())
-    
+
     async def test_spending_with_s(self):
         emu = ChatEmu()
 
@@ -470,18 +469,18 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
 
         await emu.sendMessage('alice', '/report')
         self.assertEqual('eve ➡️ alice 200🎪\nbob ➡️ alice 100🎪\n', emu.getRepliedText())
-    
+
     async def test_add_for_everyone(self):
         emu = ChatEmu()
 
         # First, create some spendings to establish users in the group
         await emu.sendMessage('alice', '/add 100\n@bob 50\n@charlie 50')
         self.assertEqual('Запомнил🍶', emu.getRepliedText())
-        
+
         # Now add an expense with no debtors specified - should split among all users
         await emu.sendMessage('alice', '/add 600\ntaxi')
         self.assertEqual('Запомнил🍶', emu.getRepliedText())
-        
+
         # Check report: 600 split equally among alice, bob, charlie (3 users) = 200 each
         # Since alice paid, bob and charlie owe alice 200 each
         await emu.sendMessage('alice', '/report')
@@ -495,7 +494,7 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
 
         await emu.sendMessage('a', '/report', reply_id=2) # Reply to 2 message in chat
         self.assertEqual('Сумма: 1000\n\n@a 400+x+x (400 + 2x)\n@b 200+x+x+x (200 + 3x)\n@c не заполнил\n@d 80', emu.getRepliedText())
-    
+
     async def test_spending_adding_errors(self):
         emu = ChatEmu()
 
@@ -504,10 +503,10 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
 
         with self.assertRaisesRegex(utils.BotWrongInputException, 'Некорректная сумма у должника'):
             await emu.sendMessage('alice', '/add 300\n@a test')
-        
+
         with self.assertRaisesRegex(utils.BotWrongInputException, 'Не указаны должники'):
             await emu.sendMessage('alice', '/add 300')
-    
+
     async def test_spending_adding_wrong_input_errors(self):
         emu = ChatEmu()
 

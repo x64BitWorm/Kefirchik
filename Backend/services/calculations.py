@@ -1,5 +1,4 @@
 import math
-import re
 from queue import LifoQueue
 import utils
 from services.formatters import formatMoney
@@ -15,7 +14,7 @@ operation_priorities = {"-" : 1, "+": 1, "*": 2, "×": 2, "⋅": 2, "/": 3, "÷"
 class ExpressionContext:
   def __init__(self):
     self.total_sum: float | None = None
-  
+
   def with_total_sum(self, total_sum: float) -> 'ExpressionContext':
     self.total_sum = total_sum
     return self
@@ -155,9 +154,9 @@ def calculate_spendings(expressions, total_sum) -> list[float]:
       else:
         raise BotException(f"Не сошлось: лишние {formatMoney(-diff)}")
     return [b + diff / len(expressions) for b, a in expressions_values]
-  
+
   x = (total_sum - b_total) / a_total
-  
+
   return [a * x + b for b, a in expressions_values]
 
 def get_spending_meta_info(expressions: list[str], total_sum: float) -> tuple[SpendingType, float, float | None]:

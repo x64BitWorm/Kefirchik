@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import logging
+import re
 import ssl
 from handlers import help_handler
 from facades.callbacks_facade import CallbacksFacade
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 def _photo_with_add_command(message: Message) -> bool:
-    return bool(message.photo and message.caption and '/add' in message.caption)
+    return bool(message.photo and message.caption and re.match(r"^/add(?:@\w+)?(?:\s|$)", message.caption))
 
 
 class TgWrapper:
@@ -74,35 +75,45 @@ class TgWrapper:
             asyncio.run(self._start_webhook())
         else:
             logger.info("Starting Telegram polling")
-            asyncio.run(self.dp.start_polling(self.bot, allowed_updates=self.dp.resolve_used_update_types()))
+            asyncio.run(self._start_polling())
+
+    async def _start_polling(self):
+        try:
+            await self.bot.delete_webhook(drop_pending_updates=False)
+            await self.dp.start_polling(self.bot, allowed_updates=self.dp.resolve_used_update_types())
+        finally:
+            await self.bot.session.close()
 
     async def _start_webhook(self):
-        await self.bot.set_webhook(
-            url="https://kefirchik-bot.tw1.ru:8443",
-            secret_token='ASecretTokenIHaveChangedByNow',
-            allowed_updates=self.dp.resolve_used_update_types(),
-        )
-        app = web.Application()
-        webhook_requests_handler = SimpleRequestHandler(
-            dispatcher=self.dp,
-            bot=self.bot,
-            secret_token='ASecretTokenIHaveChangedByNow',
-        )
-        webhook_requests_handler.register(app, path='/webhook')
-        setup_application(app, self.dp, bot=self.bot)
+        try:
+            await self.bot.set_webhook(
+                url="https://kefirchik-bot.tw1.ru:8443/webhook",
+                secret_token='ASecretTokenIHaveChangedByNow',
+                allowed_updates=self.dp.resolve_used_update_types(),
+            )
+            app = web.Application()
+            webhook_requests_handler = SimpleRequestHandler(
+                dispatcher=self.dp,
+                bot=self.bot,
+                secret_token='ASecretTokenIHaveChangedByNow',
+            )
+            webhook_requests_handler.register(app, path='/webhook')
+            setup_application(app, self.dp, bot=self.bot)
 
-        ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        ssl_context.load_cert_chain(
-            certfile='/var/lib/kefirchik/cert.pem',
-            keyfile='/var/lib/kefirchik/private.key',
-        )
+            ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+            ssl_context.load_cert_chain(
+                certfile='/var/lib/kefirchik/cert.pem',
+                keyfile='/var/lib/kefirchik/private.key',
+            )
 
-        runner = web.AppRunner(app)
-        await runner.setup()
-        site = web.TCPSite(runner, '0.0.0.0', 8443, ssl_context=ssl_context)
-        await site.start()
+            runner = web.AppRunner(app)
+            await runner.setup()
+            site = web.TCPSite(runner, '0.0.0.0', 8443, ssl_context=ssl_context)
+            await site.start()
 
-        await asyncio.Event().wait()
+            await asyncio.Event().wait()
+        finally:
+            await self.bot.session.close()
 
     def _wrap_message(self, func):
         async def wrapper(message: Message):

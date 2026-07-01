@@ -1,6 +1,7 @@
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, BufferedInputFile
 from aiogram.types.reaction_type_emoji import ReactionTypeEmoji
 from models.bot_api.bot_api_interfaces import IMessage, ICallback
+from models.dto.report_dto import ReportFileDto
 
 
 class TgMessage(IMessage):
@@ -79,6 +80,8 @@ class TgMessage(IMessage):
             )
 
     async def reply_document(self, document: any, caption: str):
+        if isinstance(document, ReportFileDto):
+            document = BufferedInputFile(file=document.file, filename=document.filename)
         await self._message.reply_document(document=document, caption=caption)
 
     async def delete(self):
