@@ -27,7 +27,7 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
     async def test_add_spending_with_alternative_math_operators(self):
         emu = ChatEmu()
 
-        await emu.sendMessage('alice', '/add 2×100 + 100⋅2\n@bob 1200÷3 + 0:2\ntea')
+        await emu.sendMessage('alice', '/add 2×100 + 100⋅2\n@bob 1200÷3\ntea')
         self.assertEqual('Запомнил🍶', emu.getRepliedText())
 
         await emu.sendMessage('alice', '/report')
@@ -510,8 +510,26 @@ class TestSpendings(unittest.IsolatedAsyncioTestCase):
     async def test_spending_adding_wrong_input_errors(self):
         emu = ChatEmu()
 
-        with self.assertRaisesRegex(utils.BotWrongInputException, "Значение должно быть числом или переменной. Сейчас - '300x'"):
+        with self.assertRaisesRegex(utils.BotWrongInputException, "Значение должно быть числом, переменной или временем. Сейчас - '300x'"):
             await emu.sendMessage('alice', '/add 500\n@bob 200*x\n@alice 300 x')
+    
+    async def test_add_spending_with_time(self):
+        emu = ChatEmu()
+
+        await emu.sendMessage('alice', '/add 900\n@alice (21:00-19:00)*x\n@bob (20:00-19:00)*x\nbilliard')
+        self.assertEqual('Запомнил🍶', emu.getRepliedText())
+
+        await emu.sendMessage('alice', '/add 165\n@alice 1:00+15\n@bob 2:00-30\nbilliard')
+        self.assertEqual('Запомнил🍶', emu.getRepliedText())
+
+        await emu.sendMessage('alice', '/add 90\n@alice 2:00-45\n@bob 15\nbilliard')
+        self.assertEqual('Запомнил🍶', emu.getRepliedText())
+
+        await emu.sendMessage('alice', '/add 120\n@alice 1:00+15\n@bob 20:00-19:15\nbilliard')
+        self.assertEqual('Запомнил🍶', emu.getRepliedText())
+
+        await emu.sendMessage('alice', '/report')
+        self.assertEqual('bob ➡️ alice 450🎪\n', emu.getRepliedText())
 
 if __name__ == "__main__":
     unittest.main()
