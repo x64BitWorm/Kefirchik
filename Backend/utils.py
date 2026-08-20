@@ -1,3 +1,4 @@
+import bisect
 from datetime import datetime
 import re
 from zoneinfo import ZoneInfo
@@ -42,3 +43,38 @@ def get_continuation_prefix(text: str) -> str | None:
         if text.startswith(prefix):
             return prefix
     return None
+
+def bisect_index_of(a_list, element):
+    idx = bisect.bisect_left(a_list, element)
+    if idx < len(a_list) and a_list[idx] == element:
+        return idx
+    return -1
+
+def bisect_insert_uniq(a_list: list, element):
+    idx = bisect.bisect_left(a_list, element)
+    if idx < len(a_list) and a_list[idx] == element:
+        return
+    a_list.insert(idx, element)
+
+def align_tables(*tables: list[list[str]]) -> list[list[str]]:
+    tables = [table for table in tables if table]
+    if not tables:
+        return []
+    result = []
+    tableWidths = []
+    tableHeights = []
+    for table in tables:
+        tableWidths.append(max(len(row) for row in table) + 1)
+        tableHeights.append(len(table))
+    totalHeights = max(tableHeights)
+    for rowIdx in range(totalHeights):
+        row = []
+        for tableIdx, table in enumerate(tables):
+            tableRow = []
+            if len(table) > rowIdx:
+                tableRow = table[rowIdx]
+            if len(tableRow) < tableWidths[tableIdx]:
+                tableRow += [''] * (tableWidths[tableIdx] - len(tableRow))
+            row += tableRow
+        result.append(row)
+    return result

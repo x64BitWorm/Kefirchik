@@ -21,3 +21,21 @@ class ReportFileDto:
     def __init__(self, file: bytes, filename: str):
         self.file = file
         self.filename = filename
+
+class MutualBalanceDto:
+    def __init__(self, debtor_nick: str = '', papik_nick: str = '', amount: float = 0.0):
+        self.debtorNick = debtor_nick
+        self.papikNick = papik_nick
+        # Строго положительный
+        if amount <= 0:
+            raise ValueError(f"Amount must be strictly positive, got {amount}")
+        self.amount = amount
+
+    def __eq__(self, other):
+        if not isinstance(other, MutualBalanceDto):
+            return False
+        return (
+            self.debtorNick == other.debtorNick and
+            self.papikNick == other.papikNick and
+            self.amount == other.amount
+        )
